@@ -1,5 +1,15 @@
 #!/usr/bin/env sh
 
-printf "Formatting Repo Files"
+echo "🚀 Formatting Repository Files..."
+
+echo "🎨 Running frontend formatting..."
 cd frontend
 yarn format
+
+echo "🔙 Returning to project root..."
+cd ..
+
+echo "☕ Running Java checks..."
+./scripts/check-java.sh
+
+echo "✨ All formatting complete!"

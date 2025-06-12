@@ -10,6 +10,7 @@ plugins {
     id 'distribution'
     id 'application'
     id "org.flywaydb.flyway" version "9.22.0"
+    id 'com.diffplug.spotless' version '7.0.4'
 }
 
 distributions {
@@ -104,6 +105,19 @@ allprojects {
         }
     }
 }
+
+spotless {
+    java {
+        target 'src/**/*.java'
+
+        googleJavaFormat('1.17.0').aosp()
+
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
 tasks.named('resolveMainClassName') {
     dependsOn tasks.named('copyFrontend')
 }
