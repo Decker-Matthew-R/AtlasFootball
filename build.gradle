@@ -28,7 +28,7 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 
 flyway {
-    url = 'jdbc:postgresql://localhost:5432/fortuna_dev'
+    url = 'jdbc:postgresql://localhost:5432/atlas_dev'
     user = 'dev'
     password = 'password'
     cleanDisabled = false
@@ -72,7 +72,7 @@ dependencies {
 }
 
 application {
-    mainClass.set('com.fortuna.FortunaApplication')
+    mainClass.set('com.atlas.AtlasApplication')
 }
 
 bootJar.enabled = false
@@ -177,21 +177,21 @@ tasks.register('installPerformance', Exec) {
 }
 
 tasks.register('flywayTestDbClean', FlywayCleanTask) {
-    url = 'jdbc:postgresql://localhost:5433/fortuna_test'
-    user = 'fortuna_test'
+    url = 'jdbc:postgresql://localhost:5433/atlas_test'
+    user = 'atlas_test'
     password = 'password'
     cleanDisabled = false
 }
 
 tasks.register('flywayJourneyTestDbClean', FlywayCleanTask) {
-    url = 'jdbc:postgresql://localhost:5434/fortuna_journey'
-    user = 'fortuna_journey'
+    url = 'jdbc:postgresql://localhost:5434/atlas_journey'
+    user = 'atlas_journey'
     password = 'password'
     cleanDisabled = false
 }
 tasks.register('flywayTestDbMigrate', FlywayMigrateTask) {
-    url = 'jdbc:postgresql://localhost:5433/fortuna_test'
-    user = 'fortuna_test'
+    url = 'jdbc:postgresql://localhost:5433/atlas_test'
+    user = 'atlas_test'
     password = 'password'
     cleanDisabled = false
 }

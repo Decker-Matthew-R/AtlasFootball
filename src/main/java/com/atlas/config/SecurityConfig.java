@@ -1,4 +1,4 @@
-package com.fortuna.config;
+package com.atlas.config;
 
 
 import org.springframework.context.annotation.Bean;
