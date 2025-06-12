@@ -45,6 +45,12 @@ configurations {
 }
 
 dependencies {
+    constraints {
+        implementation('org.apache.commons:commons-compress:1.26.0') {
+            because 'CVE-2024-25710 and CVE-2024-26308'
+        }
+    }
+
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
