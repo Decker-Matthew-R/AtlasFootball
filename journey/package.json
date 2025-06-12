@@ -14,7 +14,8 @@
     "resolutions": {
         "**/cross-spawn": "^7.0.5",
         "execa": "^5.1.1",
-        "axios": "^1.8.4"
+        "wait-on/": "7.2.0",
+        "axios": "^1.8.5"
     }
 }
 
