@@ -13,13 +13,13 @@ server:
     shutdown: graceful
 spring:
     application:
-        name: fortuna
+        name: atlas
     output:
         ansi:
             enabled: always
     datasource:
-        url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:fortuna_test}
-        username: ${POSTGRES_USERNAME:fortuna_test}
+        url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:atlas_test}
+        username: ${POSTGRES_USERNAME:atlas_test}
         password: ${POSTGRES_PASSWORD:password}
         driver-class-name: org.postgresql.Driver
         connectionProperties:
@@ -54,7 +54,7 @@ application:
     feature-flags:
         useJobDescriptionAndPersonaMetrics: false
 
-#fortuna:
+#atlas:
 #  concurrency:
 #    timeout-in-seconds: 300
 #  migration:

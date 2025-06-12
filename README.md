@@ -1,8 +1,8 @@
-# Fortuna Starter App
+# Atlas Starter App
 
 ## About
 
-**Fortuna** is a React/Typescript frontend and Spring/Java backend starter app meant to provide a quick way to begin 
+**Atlas** is a React/Typescript frontend and Spring/Java backend starter app meant to provide a quick way to begin 
 development on web applications.
 
 ## Getting Started
@@ -107,4 +107,4 @@ SonarQube is a software analysis tool that allows users to view test coverage, c
 
 ## Running the App Locally
 
-If you installed the Multirun plugin, then make sure Docker is running and run the `Fortuna` run config.
+If you installed the Multirun plugin, then make sure Docker is running and run the `Atlas` run config.
