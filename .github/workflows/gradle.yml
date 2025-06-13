@@ -123,6 +123,19 @@ jobs:
             -   name: Run Journey Tests
                 run: ./gradlew testJourney
 
+    Secret-Scanning:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - uses: gitleaks/gitleaks-action@v2
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+
+
     Dependency-Submission-Scan:
         runs-on: ubuntu-latest
         permissions:
