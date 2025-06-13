@@ -30,7 +30,7 @@ module.exports = {
             jsx: true,
         },
     },
-    plugins: ['@typescript-eslint', 'react', 'react-hooks', 'import', 'jest'],
+    plugins: ['@typescript-eslint', 'react', 'react-hooks', 'import', 'jest', 'unused-imports'],
     settings: {
         'import/resolver': {
             node: {
@@ -43,6 +43,23 @@ module.exports = {
         jest: {
             version: 'detect',
         },
+    },
+    rules: {
+        // Turn off conflicting base rules
+        'no-unused-vars': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+
+        // Use the unused-imports plugin (this one actually removes them!)
+        'unused-imports/no-unused-imports': 'error',
+        'unused-imports/no-unused-vars': [
+            'warn',
+            {
+                vars: 'all',
+                varsIgnorePattern: '^_',
+                args: 'after-used',
+                argsIgnorePattern: '^_',
+            },
+        ],
     },
     overrides: [
         {

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// @ts-ignore
+// @ts-expect-error from App.tsx
 import App from './App.tsx';
 import './index.css';
 import { CssBaseline, ThemeProvider } from '@mui/material';
