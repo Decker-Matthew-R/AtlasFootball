@@ -39,6 +39,10 @@ java {
     sourceCompatibility = '17'
 }
 
+jacoco {
+    toolVersion = "0.8.13"
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -118,6 +122,63 @@ spotless {
     }
 }
 
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/Application.class',
+                '**/config/**',
+                '**/*Config.class',
+                '**/*Configuration.class',
+                '**/dto/**',
+                '**/entity/**'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.90  // 90% coverage required
+            }
+        }
+        rule {
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.90  // 90% branch coverage required
+            }
+        }
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                // Same exclusions as jacocoTestReport
+                '**/Application.class',
+                '**/config/**',
+                '**/*Config.class',
+                '**/*Configuration.class',
+                '**/dto/**',
+                '**/entity/**'
+            ])
+        }))
+    }
+}
+
 tasks.named('resolveMainClassName') {
     dependsOn tasks.named('copyFrontend')
 }
@@ -131,6 +192,7 @@ tasks.named('compileTestJava') {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
     minHeapSize = "1024m"
     maxHeapSize = "2048m"
 }

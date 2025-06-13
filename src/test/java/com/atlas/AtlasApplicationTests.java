@@ -8,4 +8,9 @@ class AtlasApplicationTests {
 
     @Test
     void contextLoads() {}
+
+    @Test
+    void mainMethodTest() {
+        AtlasApplication.main(new String[] {});
+    }
 }
