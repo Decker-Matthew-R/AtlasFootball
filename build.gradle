@@ -52,7 +52,7 @@ configurations {
 dependencyManagement {
     dependencies {
         dependency 'org.apache.commons:commons-compress:1.26.0'
-        dependency 'org.springframework:spring-webmvc:6.2.8'
+        dependency 'org.springframework:spring-web:6.2.8'
     }
 }
 
