@@ -13,6 +13,12 @@ plugins {
     id 'com.diffplug.spotless' version '7.0.4'
 }
 
+configurations.configureEach {
+    resolutionStrategy {
+        force 'org.apache.commons:commons-compress:1.26.0'
+    }
+}
+
 distributions {
     main {
         distributionBaseName.set(rootProject.name)
