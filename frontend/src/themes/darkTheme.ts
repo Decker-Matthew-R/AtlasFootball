@@ -28,38 +28,38 @@ const darkTheme = createTheme({
 
     // Primary color (your brand blue)
     primary: {
-      main: brandColors.primary,     // #2D5CAE
-      light: primaryVariants[400],   // Lighter blue for hover states
-      dark: primaryVariants[700],    // Darker blue for pressed states
+      main: brandColors.primary, // #2D5CAE
+      light: primaryVariants[400], // Lighter blue for hover states
+      dark: primaryVariants[700], // Darker blue for pressed states
       contrastText: brandColors.white,
     },
 
     // Secondary color (using a complementary approach)
     secondary: {
-      main: '#404040',               // Dark grey for secondary actions
-      light: '#606060',              // Lighter grey
-      dark: '#202020',               // Darker grey
+      main: '#404040', // Dark grey for secondary actions
+      light: '#606060', // Lighter grey
+      dark: '#202020', // Darker grey
       contrastText: brandColors.white,
     },
 
     // Background colors - black-based
     background: {
-      default: brandColors.black,    // #000000 - Main page background
-      paper: '#0A0A0A',             // Slightly lighter for cards/modals
+      default: brandColors.black, // #000000 - Main page background
+      paper: '#0A0A0A', // Slightly lighter for cards/modals
     },
 
     // Surface colors for elevated components
     surface: {
-      main: '#151515',              // For elevated surfaces
-      light: '#202020',             // For hover states
-      dark: '#0A0A0A',              // For pressed states
+      main: '#151515', // For elevated surfaces
+      light: '#202020', // For hover states
+      dark: '#0A0A0A', // For pressed states
     },
 
     // Text colors optimized for dark theme
     text: {
-      primary: brandColors.white,    // #FFFFFF - Primary text
-      secondary: '#B0B0B0',         // Light grey for secondary text
-      disabled: '#606060',          // Darker grey for disabled text
+      primary: brandColors.white, // #FFFFFF - Primary text
+      secondary: '#B0B0B0', // Light grey for secondary text
+      disabled: '#606060', // Darker grey for disabled text
     },
 
     // Semantic colors adapted for dark theme
