@@ -1,68 +1,52 @@
 import { createTheme } from '@mui/material/styles';
 
-// Your brand colors
 const brandColors = {
   primary: '#2D5CAE',
   black: '#000000',
   white: '#FFFFFF',
 };
 
-// Generate primary color variants
 const primaryVariants = {
   50: '#E8F0FF',
   100: '#C6DAFF',
   200: '#A1C4FF',
   300: '#7CAEFF',
   400: '#5D98FF',
-  500: brandColors.primary, // #2D5CAE - Main brand color
+  500: brandColors.primary,
   600: '#2650A3',
   700: '#1E4297',
   800: '#17358C',
   900: '#0D2580',
 };
 
-// Create the dark theme
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
-
-    // Primary color (your brand blue)
     primary: {
-      main: brandColors.primary, // #2D5CAE
-      light: primaryVariants[400], // Lighter blue for hover states
-      dark: primaryVariants[700], // Darker blue for pressed states
+      main: brandColors.primary,
+      light: primaryVariants[400],
+      dark: primaryVariants[700],
       contrastText: brandColors.white,
     },
 
-    // Secondary color (using a complementary approach)
     secondary: {
-      main: '#404040', // Dark grey for secondary actions
-      light: '#606060', // Lighter grey
-      dark: '#202020', // Darker grey
+      main: '#404040',
+      light: '#606060',
+      dark: '#202020',
       contrastText: brandColors.white,
     },
 
-    // Background colors - black-based
     background: {
-      default: brandColors.black, // #000000 - Main page background
-      paper: '#0A0A0A', // Slightly lighter for cards/modals
+      default: brandColors.black,
+      paper: '#0A0A0A',
     },
 
-    // Surface colors for elevated components
-    surface: {
-      main: '#151515', // For elevated surfaces
-      light: '#202020', // For hover states
-      dark: '#0A0A0A', // For pressed states
-    },
-
-    // Text colors optimized for dark theme
     text: {
-      primary: brandColors.white, // #FFFFFF - Primary text
-      secondary: '#B0B0B0', // Light grey for secondary text
-      disabled: '#606060', // Darker grey for disabled text
+      primary: brandColors.white,
+      secondary: '#B0B0B0',
+      disabled: '#606060',
     },
 
-    // Semantic colors adapted for dark theme
     error: {
       main: '#FF5252',
       light: '#FF7A7A',
@@ -91,7 +75,6 @@ const darkTheme = createTheme({
       contrastText: brandColors.white,
     },
 
-    // Grey scale for dark theme
     grey: {
       50: '#FAFAFA',
       100: '#F5F5F5',
@@ -105,10 +88,8 @@ const darkTheme = createTheme({
       900: '#212121',
     },
 
-    // Divider and border colors
     divider: '#303030',
 
-    // Action colors for interactive elements
     action: {
       active: brandColors.white,
       hover: 'rgba(255, 255, 255, 0.08)',
@@ -118,8 +99,6 @@ const darkTheme = createTheme({
       focus: 'rgba(255, 255, 255, 0.12)',
     },
   },
-
-  // Typography optimized for dark theme
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
@@ -177,27 +156,21 @@ const darkTheme = createTheme({
       textTransform: 'none', // Remove uppercase
     },
   },
-
-  // Spacing and shape
   spacing: 8,
   shape: {
     borderRadius: 8,
   },
 
-  // Component customizations for dark theme
   components: {
-    // Global CSS baseline
     MuiCssBaseline: {
       styleOverrides: {
         body: {
           backgroundColor: brandColors.black,
           color: brandColors.white,
         },
-        // Remove default focus outlines and replace with custom ones
         '*:focus': {
           outline: 'none',
         },
-        // Custom focus styles for accessibility
         'button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible': {
           outline: `2px solid ${brandColors.white}`,
           outlineOffset: '2px',
@@ -205,7 +178,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // Button customizations
     MuiButton: {
       styleOverrides: {
         root: {
@@ -214,11 +186,9 @@ const darkTheme = createTheme({
           fontWeight: 500,
           padding: '10px 20px',
           boxShadow: 'none',
-          // Remove default focus outline
           '&:focus': {
             outline: 'none',
           },
-          // Custom focus styles
           '&:focus-visible': {
             outline: `2px solid ${brandColors.white}`,
             outlineOffset: '2px',
@@ -261,7 +231,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // Card customizations
     MuiCard: {
       styleOverrides: {
         root: {
@@ -277,7 +246,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // TextField customizations
     MuiTextField: {
       styleOverrides: {
         root: {
@@ -293,7 +261,6 @@ const darkTheme = createTheme({
             '&.Mui-focused fieldset': {
               borderColor: brandColors.primary,
             },
-            // Remove the white outline styles here
           },
           '& .MuiInputLabel-root': {
             color: '#B0B0B0',
@@ -308,7 +275,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // Paper customizations
     MuiPaper: {
       styleOverrides: {
         root: {
@@ -327,7 +293,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // AppBar customizations
     MuiAppBar: {
       styleOverrides: {
         root: {
@@ -338,7 +303,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // Chip customizations
     MuiChip: {
       styleOverrides: {
         root: {
@@ -358,7 +322,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // Dialog customizations
     MuiDialog: {
       styleOverrides: {
         paper: {
@@ -369,7 +332,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // List customizations
     MuiListItem: {
       styleOverrides: {
         root: {
@@ -386,7 +348,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // Tabs customizations
     MuiTabs: {
       styleOverrides: {
         indicator: {
@@ -395,7 +356,6 @@ const darkTheme = createTheme({
       },
     },
 
-    // Switch customizations
     MuiSwitch: {
       styleOverrides: {
         switchBase: {
@@ -413,7 +373,6 @@ const darkTheme = createTheme({
     },
   },
 
-  // Custom breakpoints
   breakpoints: {
     values: {
       xs: 0,
