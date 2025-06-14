@@ -32,7 +32,7 @@ export default {
         'src/main.tsx',
         'src/index.css',
         'src/**/*.d.ts',
-        'src/themes/*'
+        'src/themes/*',
       ],
         thresholds: {
             branches: 80,
@@ -41,7 +41,7 @@ export default {
             statements: 80
         }
     },
-    ...(process.env.CI && {minThreads: 1, maxThreads: 1}),
+    ...(process.env.CI && { minThreads: 1, maxThreads: 1 }),
   },
   server: {
     port: 3000,
