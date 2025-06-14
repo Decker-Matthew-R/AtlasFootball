@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Optional: Block specific paths
+# Disallow: /admin/
+# Disallow: /login/
+
+Sitemap: https://yoursite.com/sitemap.xml

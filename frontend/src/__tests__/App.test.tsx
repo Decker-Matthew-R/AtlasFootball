@@ -1,22 +1,20 @@
-import { render, act, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it } from 'vitest';
 import App from '../App';
 
-describe('render app', () => {
+describe('Landing Page', () => {
   const renderApp = () => render(<App />);
 
-  it('should render app images', async () => {
+  it('Should contain a background image', async () => {
     renderApp();
 
-    const countButton = screen.getByRole('button', { name: 'count is 0' });
+    const backgroundBox = screen.getByTestId('landing-page-container');
 
-    expect(countButton).toBeVisible();
-
-    act(() => {
-      countButton.click();
+    expect(backgroundBox).toHaveStyle({
+      'background-image': 'url(/src/assets/landingPageGenericBackground.jpg)',
+      'background-size': 'cover',
+      'background-position': 'center',
+      'background-repeat': 'no-repeat',
     });
-
-    const onScreenText = screen.getByText('count is 1');
-    expect(onScreenText).toBeVisible();
   });
 });
