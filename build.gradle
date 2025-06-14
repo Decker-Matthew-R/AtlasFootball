@@ -242,7 +242,7 @@ tasks.register('cleanFrontend', Delete) {
 
 tasks.register('testFrontend', Exec) {
     dependsOn("installFrontend")
-    commandLine("yarn", "--cwd", "frontend", "test")
+    commandLine("yarn", "--cwd", "frontend", "test:ci")
 }
 
 tasks.register('testJourney', Exec) {
