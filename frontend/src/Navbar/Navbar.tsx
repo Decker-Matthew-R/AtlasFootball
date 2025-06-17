@@ -12,6 +12,7 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
+import { useNavigate } from 'react-router-dom';
 
 const pages = ['News', 'Matches'];
 const settings = ['Profile', 'Logout'];
@@ -19,6 +20,8 @@ const settings = ['Profile', 'Logout'];
 function Navbar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+
+  const navigate = useNavigate();
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -35,20 +38,25 @@ function Navbar() {
     setAnchorElUser(null);
   };
 
+  const handleBrandingClick = () => {
+    navigate('/');
+  };
+
   return (
     <AppBar position='static'>
       <Container maxWidth={false}>
         <Toolbar disableGutters>
           <AdbIcon
             aria-label='atlas-logo'
-            sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }}
+            onClick={handleBrandingClick}
+            sx={{ display: { xs: 'none', md: 'flex' }, mr: 1, cursor: 'pointer' }}
           />
           <Typography
             aria-label={'atlas-site-name'}
+            onClick={handleBrandingClick}
             variant='h6'
             noWrap
             component='a'
-            href='#app-bar-with-responsive-menu'
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
@@ -57,6 +65,7 @@ function Navbar() {
               letterSpacing: '.3rem',
               color: 'inherit',
               textDecoration: 'none',
+              cursor: 'pointer',
             }}
           >
             ATLAS
@@ -101,14 +110,15 @@ function Navbar() {
           </Box>
           <AdbIcon
             aria-label={'atlas-logo-mobile'}
-            sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }}
+            onClick={handleBrandingClick}
+            sx={{ display: { xs: 'flex', md: 'none' }, mr: 1, cursor: 'pointer' }}
           />
           <Typography
             aria-label={'atlas-site-name-mobile'}
+            onClick={handleBrandingClick}
             variant='h5'
             noWrap
             component='a'
-            href='#app-bar-with-responsive-menu'
             sx={{
               mr: 2,
               display: { xs: 'flex', md: 'none' },
@@ -118,6 +128,7 @@ function Navbar() {
               letterSpacing: '.3rem',
               color: 'inherit',
               textDecoration: 'none',
+              cursor: 'pointer',
             }}
           >
             ATLAS
@@ -176,4 +187,5 @@ function Navbar() {
     </AppBar>
   );
 }
+
 export default Navbar;
