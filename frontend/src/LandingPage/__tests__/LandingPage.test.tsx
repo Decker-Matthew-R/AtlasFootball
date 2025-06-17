@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it } from 'vitest';
-import App from '../App';
+import LandingPage from '../LandingPage';
 
 describe('Landing Page', () => {
-  const renderApp = () => render(<App />);
+  const renderApp = () => render(<LandingPage />);
 
   it('Should contain a background image', async () => {
     renderApp();

@@ -1,4 +1,4 @@
-# Atlas Starter App
+# Atlas Starter LandingPage
 
 ## About
 
@@ -105,6 +105,6 @@ SonarQube is a software analysis tool that allows users to view test coverage, c
     3. Visit `localhost:9500` to view SonarQube code analysis.
     4. (Optional) You can create an alias that runs all tests and uploads the report to SonarQube: `./gradlew testUnits && ./gradlew sonar -Dsonar.token=$SONAR_USER_TOKEN`
 
-## Running the App Locally
+## Running the LandingPage Locally
 
 If you installed the Multirun plugin, then make sure Docker is running and run the `Atlas` run config.

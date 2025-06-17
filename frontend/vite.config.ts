@@ -29,6 +29,7 @@ export default {
         '**/*.spec.{js,ts,jsx,tsx}',
         'build/**',
         'coverage/**',
+        'src/Routes/*',
         'src/main.tsx',
         'src/index.css',
         'src/**/*.d.ts',

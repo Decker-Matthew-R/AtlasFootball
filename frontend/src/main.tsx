@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// @ts-expect-error from App.tsx
-import App from './App.tsx';
+import LandingPage from './LandingPage/LandingPage';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import darkTheme from './themes/darkTheme';
 import Navbar from './Navbar/Navbar';
@@ -11,7 +10,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider theme={darkTheme}>
       <CssBaseline enableColorScheme />
       <Navbar />
-      <App />
+      <LandingPage />
     </ThemeProvider>
   </React.StrictMode>,
 );
