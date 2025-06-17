@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Atlas Football App" type="Multirun" separateTabs="false" reuseTabsWithFailures="false" startOneByOne="true" markFailedProcess="true" hideSuccessProcess="false" delayTime="0.0">
+  <configuration default="false" name="Atlas Football LandingPage" type="Multirun" separateTabs="false" reuseTabsWithFailures="false" startOneByOne="true" markFailedProcess="true" hideSuccessProcess="false" delayTime="0.0">
     <runConfiguration name="Atlas Docker" type="Docker" />
     <runConfiguration name="Atlas Frontend" type="npm" />
     <runConfiguration name="Atlas Backend" type="Spring Boot" />

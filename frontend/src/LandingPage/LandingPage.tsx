@@ -1,7 +1,7 @@
-import backgroundImage from './assets/landingPageGenericBackground.jpg';
+import backgroundImage from '../assets/landingPageGenericBackground.jpg';
 import { Box } from '@mui/material';
 
-function App() {
+function LandingPage() {
   return (
     <Box
       sx={{
@@ -17,4 +17,4 @@ function App() {
   );
 }
 
-export default App;
+export default LandingPage;
