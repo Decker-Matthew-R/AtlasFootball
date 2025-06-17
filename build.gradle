@@ -66,6 +66,7 @@ configurations {
 dependencyManagement {
     dependencies {
         dependency 'org.springframework:spring-web:6.2.8'
+        dependency 'org.apache.tomcat.embed:tomcat-embed-core:10.1.42'
     }
 }
 
