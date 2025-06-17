@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, vi } from 'vitest';
-import Navbar from '../Navbar';
+import { Navbar } from '../Navbar';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -59,19 +59,30 @@ describe('Navbar', () => {
     expect(mockNavigate).toHaveBeenCalledTimes(1);
   });
 
-  it.each(['News', 'Matches'])(
-    'desktop: should contain appropriate navigation buttons',
-    (navigationButton) => {
+  it.each([
+    ['News', '/'],
+    ['Matches', '/'],
+  ])(
+    'desktop: should contain %s navigation buttons and navigate to %s when clicked',
+    async (navigationButton, expectedRoute) => {
       renderDesktopNavbar();
 
       const navigationLink = screen.getByRole('button', { name: navigationButton });
       expect(navigationLink).toBeVisible();
+
+      await userEvent.click(navigationLink);
+
+      expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
+      expect(mockNavigate).toHaveBeenCalledTimes(1);
     },
   );
 
-  it.each(['Profile', 'Logout'])(
-    'desktop: should display profile icon, %s menu item when profile icon is clicked, and hide menu when user clicks away ',
-    async (menuItem) => {
+  it.each([
+    ['Profile', '/'],
+    ['Logout', '/'],
+  ])(
+    'desktop: should display profile icon, %s menu item when profile icon is clicked, the user navigates to %s and hide menu when user clicks away ',
+    async (menuItem, expectedRoute) => {
       renderDesktopNavbar();
 
       const profileIcon = screen.getByLabelText('Open Profile Settings');
@@ -87,6 +98,8 @@ describe('Navbar', () => {
 
       await userEvent.click(menuOption);
 
+      expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
+      expect(mockNavigate).toHaveBeenCalledTimes(1);
       expect(menuOption).not.toBeVisible();
     },
   );

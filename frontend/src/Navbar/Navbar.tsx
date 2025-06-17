@@ -14,10 +14,16 @@ import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 import { useNavigate } from 'react-router-dom';
 
-const pages = ['News', 'Matches'];
-const settings = ['Profile', 'Logout'];
+const pages = [
+  { page: 'News', route: '/' },
+  { page: 'Matches', route: '/' },
+];
+const settings = [
+  { setting: 'Profile', route: '/' },
+  { setting: 'Logout', route: '/' },
+];
 
-function Navbar() {
+export const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
@@ -40,6 +46,10 @@ function Navbar() {
 
   const handleBrandingClick = () => {
     navigate('/');
+  };
+
+  const handleMenuItemNavigation = (route: string) => {
+    navigate(route);
   };
 
   return (
@@ -100,10 +110,13 @@ function Navbar() {
             >
               {pages.map((page) => (
                 <MenuItem
-                  key={page}
-                  onClick={handleCloseNavMenu}
+                  key={page.page}
+                  onClick={() => {
+                    handleCloseNavMenu();
+                    handleMenuItemNavigation(page.route);
+                  }}
                 >
-                  <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
+                  <Typography sx={{ textAlign: 'center' }}>{page.page}</Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -136,11 +149,14 @@ function Navbar() {
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page) => (
               <Button
-                key={page}
-                onClick={handleCloseNavMenu}
+                key={page.page}
+                onClick={() => {
+                  handleCloseNavMenu();
+                  handleMenuItemNavigation(page.route);
+                }}
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >
-                {page}
+                {page.page}
               </Button>
             ))}
           </Box>
@@ -174,10 +190,13 @@ function Navbar() {
             >
               {settings.map((setting) => (
                 <MenuItem
-                  key={setting}
-                  onClick={handleCloseUserMenu}
+                  key={setting.setting}
+                  onClick={() => {
+                    handleCloseUserMenu();
+                    handleMenuItemNavigation(setting.route);
+                  }}
                 >
-                  <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
+                  <Typography sx={{ textAlign: 'center' }}>{setting.setting}</Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -186,6 +205,4 @@ function Navbar() {
       </Container>
     </AppBar>
   );
-}
-
-export default Navbar;
+};
