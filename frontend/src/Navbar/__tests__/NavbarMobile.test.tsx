@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, vi } from 'vitest';
-import Navbar from '../Navbar';
+import { Navbar } from '../Navbar';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -71,9 +71,12 @@ describe('Navbar', () => {
     expect(mockNavigate).toHaveBeenCalledTimes(1);
   });
 
-  it.each(['News', 'Matches'])(
-    'mobile: should display hamburger menu, %s menu item when hamburger menu is clicked, and hide menu when user clicks away ',
-    async (menuItem) => {
+  it.each([
+    ['News', '/'],
+    ['Matches', '/'],
+  ])(
+    'mobile: should display hamburger menu, %s menu item when hamburger menu is clicked, navigate to %s, and hide menu when user clicks away ',
+    async (menuItem, expectedRoute) => {
       renderMobileNavbar();
 
       const mobileHamburgerNavigationMenu = screen.getByLabelText('navigation-links');
@@ -89,13 +92,18 @@ describe('Navbar', () => {
 
       await userEvent.click(menuOption1);
 
+      expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
+      expect(mockNavigate).toHaveBeenCalledTimes(1);
       expect(menuOption1).not.toBeVisible();
     },
   );
 
-  it.each(['Profile', 'Logout'])(
-    'mobile: should display profile icon, %s menu item when profile icon is clicked, and hide menu when user clicks away ',
-    async (menuItem) => {
+  it.each([
+    ['Profile', '/'],
+    ['Logout', '/'],
+  ])(
+    'mobile: should display profile icon, %s menu item when profile icon is clicked, navigate to %s, and hide menu when user clicks away ',
+    async (menuItem, expectedRoute) => {
       renderMobileNavbar();
 
       const profileIconMobile = screen.getByLabelText('Open Profile Settings');
@@ -111,6 +119,8 @@ describe('Navbar', () => {
 
       await userEvent.click(menuOption);
 
+      expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
+      expect(mockNavigate).toHaveBeenCalledTimes(1);
       expect(menuOption).not.toBeVisible();
     },
   );
