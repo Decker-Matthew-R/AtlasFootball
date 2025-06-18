@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it } from 'vitest';
+
 import LandingPage from '../LandingPage';
 
 describe('Landing Page', () => {

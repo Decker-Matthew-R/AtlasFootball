@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, vi } from 'vitest';
-import { Navbar } from '../Navbar';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
+import { describe, it, vi } from 'vitest';
+
+import { Navbar } from '../Navbar';
 
 const mockNavigate = vi.fn();
 
@@ -42,7 +43,7 @@ describe('Navbar', () => {
 
     const siteName = screen.getByLabelText('atlas-site-name');
 
-    await userEvent.click(siteName);
+    userEvent.click(siteName);
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
     expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -53,7 +54,7 @@ describe('Navbar', () => {
 
     const siteLogo = screen.getByLabelText('atlas-logo');
 
-    await userEvent.click(siteLogo);
+    userEvent.click(siteLogo);
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
     expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -70,7 +71,7 @@ describe('Navbar', () => {
       const navigationLink = screen.getByRole('button', { name: navigationButton });
       expect(navigationLink).toBeVisible();
 
-      await userEvent.click(navigationLink);
+      userEvent.click(navigationLink);
 
       expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
       expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -88,7 +89,7 @@ describe('Navbar', () => {
       const profileIcon = screen.getByLabelText('Open Profile Settings');
       expect(profileIcon).toBeVisible();
 
-      await userEvent.click(profileIcon);
+      userEvent.click(profileIcon);
 
       const profileMenu = screen.getByRole('menu');
       expect(profileMenu).toBeVisible();
@@ -96,7 +97,7 @@ describe('Navbar', () => {
       const menuOption = screen.getByRole('menuitem', { name: menuItem });
       expect(menuOption).toBeVisible();
 
-      await userEvent.click(menuOption);
+      userEvent.click(menuOption);
 
       expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
       expect(mockNavigate).toHaveBeenCalledTimes(1);
