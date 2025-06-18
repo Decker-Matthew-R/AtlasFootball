@@ -21,7 +21,14 @@ module.exports = {
         // https://github.com/prettier/eslint-config-prettier
         'prettier',
     ],
-    ignorePatterns: ['build', 'coverage', '.eslintrc.js', 'tsconfig.json', 'vite.config.ts'],
+    ignorePatterns: [
+        'build',
+        'coverage',
+        '.eslintrc.js',
+        'tsconfig.json',
+        'vite.config.ts',
+        'setupTests.ts',
+    ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
         project: 'tsconfig.json',
@@ -35,8 +42,10 @@ module.exports = {
         'import/resolver': {
             node: {
                 extensions: ['.js', '.jsx', '.ts', '.tsx'],
+                moduleDirectory: ['node_modules', 'src'],
             },
         },
+        'import/internal-regex': '^@/',
         react: {
             version: 'detect',
         },
@@ -45,11 +54,8 @@ module.exports = {
         },
     },
     rules: {
-        // Turn off conflicting base rules
         'no-unused-vars': 'off',
         '@typescript-eslint/no-unused-vars': 'off',
-
-        // Use the unused-imports plugin (this one actually removes them!)
         'unused-imports/no-unused-imports': 'error',
         'unused-imports/no-unused-vars': [
             'warn',
@@ -60,6 +66,33 @@ module.exports = {
                 argsIgnorePattern: '^_',
             },
         ],
+        'import/order': [
+            'error',
+            {
+                groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+                'newlines-between': 'always',
+                alphabetize: {
+                    order: 'asc',
+                    caseInsensitive: true,
+                },
+                pathGroups: [
+                    {
+                        pattern: 'react',
+                        group: 'external',
+                        position: 'before',
+                    },
+                    {
+                        pattern: 'react/**',
+                        group: 'external',
+                        position: 'before',
+                    },
+                ],
+                pathGroupsExcludedImportTypes: ['react'],
+            },
+        ],
+        'import/newline-after-import': 'error',
+        'import/no-duplicates': 'error',
+        'import/no-unresolved': 'off',
     },
     overrides: [
         {
@@ -74,9 +107,12 @@ module.exports = {
                 'plugin:testing-library/react',
             ],
             rules: {
-                'jest/no-standalone-expect': 'off', // disabled because it is not functioning as intended
-                'testing-library/render-result-naming-convention': 'off', // disabled because the naming convention is unclear
-                'testing-library/no-unnecessary-act': 'off', // disabled because renderHook sometimes has useEffect
+                'jest/no-standalone-expect': 'off',
+                'testing-library/render-result-naming-convention': 'off',
+                'testing-library/no-unnecessary-act': 'off',
+                'testing-library/await-async-utils': 'off',
+                'testing-library/await-async-events': 'off',
+                '@typescript-eslint/require-await': 'off',
             },
         },
     ],

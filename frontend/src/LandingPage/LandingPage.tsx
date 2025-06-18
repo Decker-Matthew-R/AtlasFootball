@@ -1,5 +1,6 @@
-import backgroundImage from '../assets/landingPageGenericBackground.jpg';
 import { Box } from '@mui/material';
+
+import backgroundImage from '../assets/landingPageGenericBackground.jpg';
 
 function LandingPage() {
   return (

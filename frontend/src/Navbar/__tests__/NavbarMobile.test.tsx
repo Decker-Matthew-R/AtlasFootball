@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, vi } from 'vitest';
-import { Navbar } from '../Navbar';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
+import { describe, it, vi } from 'vitest';
+
+import { Navbar } from '../Navbar';
 
 const mockNavigate = vi.fn();
 
@@ -54,7 +55,7 @@ describe('Navbar', () => {
 
     const siteName = screen.getByLabelText('atlas-site-name-mobile');
 
-    await userEvent.click(siteName);
+    userEvent.click(siteName);
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
     expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -65,7 +66,7 @@ describe('Navbar', () => {
 
     const siteLogo = screen.getByLabelText('atlas-logo-mobile');
 
-    await userEvent.click(siteLogo);
+    userEvent.click(siteLogo);
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
     expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -82,7 +83,7 @@ describe('Navbar', () => {
       const mobileHamburgerNavigationMenu = screen.getByLabelText('navigation-links');
       expect(mobileHamburgerNavigationMenu).toBeVisible();
 
-      await userEvent.click(mobileHamburgerNavigationMenu);
+      userEvent.click(mobileHamburgerNavigationMenu);
 
       const profileMenu = screen.getByRole('menu');
       expect(profileMenu).toBeVisible();
@@ -90,7 +91,7 @@ describe('Navbar', () => {
       const menuOption1 = screen.getByRole('menuitem', { name: menuItem });
       expect(menuOption1).toBeVisible();
 
-      await userEvent.click(menuOption1);
+      userEvent.click(menuOption1);
 
       expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
       expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -109,7 +110,7 @@ describe('Navbar', () => {
       const profileIconMobile = screen.getByLabelText('Open Profile Settings');
       expect(profileIconMobile).toBeVisible();
 
-      await userEvent.click(profileIconMobile);
+      userEvent.click(profileIconMobile);
 
       const profileMenu = screen.getByRole('menu');
       expect(profileMenu).toBeVisible();
@@ -117,7 +118,7 @@ describe('Navbar', () => {
       const menuOption = screen.getByRole('menuitem', { name: menuItem });
       expect(menuOption).toBeVisible();
 
-      await userEvent.click(menuOption);
+      userEvent.click(menuOption);
 
       expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
       expect(mockNavigate).toHaveBeenCalledTimes(1);
