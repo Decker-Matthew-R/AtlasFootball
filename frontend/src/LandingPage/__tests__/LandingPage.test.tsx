@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it } from 'vitest';
 
-import LandingPage from '../LandingPage';
+import LandingPage from '@/LandingPage/LandingPage';
 
 describe('Landing Page', () => {
   const renderApp = () => render(<LandingPage />);

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, vi } from 'vitest';
 
-import { Navbar } from '../Navbar';
+import { Navbar } from '@/Navbar/Navbar';
 
 const mockNavigate = vi.fn();
 
