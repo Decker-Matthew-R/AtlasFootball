@@ -1,58 +1,76 @@
 logging:
-  pattern:
-    dateformat: yyyy-MM-dd HH:mm:ss.SSS, UTC
+    pattern:
+        dateformat: yyyy-MM-dd HH:mm:ss.SSS, UTC
+    level:
+      org.springframework.security: DEBUG
+      org.springframework.security.oauth2: DEBUG
 server:
-  port: 8080
-  servlet:
-    session:
-      cookie:
-        secure: true
-        http-only: true
-      ## Default, by required by APSC-DV-002270
-      tracking-modes: COOKIE
-  shutdown: graceful
+    port: 8080
+    servlet:
+        session:
+            cookie:
+                secure: true
+                http-only: true
+            ## Default, by required by APSC-DV-002270
+            tracking-modes: COOKIE
+    shutdown: graceful
 spring:
-  application:
-    name: atlas
-  output:
-    ansi:
-      enabled: always
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:atlas_dev}
-    username: ${POSTGRES_USERNAME:dev}
-    password: ${POSTGRES_PASSWORD:password}
-    driver-class-name: org.postgresql.Driver
-    connectionProperties:
-      sslFactory: org.postgresql.ssl.DefaultJavaSSLFactory
-  session:
-    timeout: 900 #STIG: APSC-DV-000070
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    properties:
-      hibernate:
-        jdbc:
-          batch_size: 30
-        order_updates: true
-        insert_updates: true
-  #    show-sql: true
-  #    properties:
-  #      hibernate:
-  #        format_sql: true
-  profiles:
-    group:
-      journey:
-      dev: dev
+    application:
+        name: atlas
+    output:
+        ansi:
+            enabled: always
+    security:
+        oauth2:
+          client:
+              registration:
+                google:
+                    client-id: ${GOOGLE_CLIENT_ID}
+                    client-secret: ${GOOGLE_CLIENT_SECRET}
+                    scope: openid, profile, email
+                    redirect-uri: http://localhost:8080/login/oauth2/code/google
+              provider:
+                google:
+                    authorization-uri: https://accounts.google.com/o/oauth2/auth
+                    token-uri: https://oauth2.googleapis.com/token
+                    user-info-uri: https://www.googleapis.com/oauth2/v2/userinfo
+                    user-name-attribute: sub
+    datasource:
+        url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:atlas_dev}
+        username: ${POSTGRES_USERNAME:dev}
+        password: ${POSTGRES_PASSWORD:password}
+        driver-class-name: org.postgresql.Driver
+        connectionProperties:
+            sslFactory: org.postgresql.ssl.DefaultJavaSSLFactory
+    session:
+        timeout: 900 #STIG: APSC-DV-000070
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        properties:
+            hibernate:
+                jdbc:
+                    batch_size: 30
+                order_updates: true
+                insert_updates: true
+    #    show-sql: true
+    #    properties:
+    #      hibernate:
+    #        format_sql: true
+    profiles:
+        group:
+            journey:
+            dev: dev
 
 application:
-  hostname: http://localhost:8080
-  logout:
-    path: /logout
-  authentication:
-    success-redirect-uri: /
-    failure-redirect-uri: /errorPage
-    post-logout-redirect-uri: "{baseUrl}"
-  feature-flags:
-    useJobDescriptionAndPersonaMetrics: false
+    hostname: http://localhost:8080
+    logout:
+        path: /logout
+    authentication:
+        success-redirect-uri: /
+        failure-redirect-uri: /errorPage
+        post-logout-redirect-uri: "{baseUrl}"
+    feature-flags:
+        useJobDescriptionAndPersonaMetrics: false
 
 #atlas:
 #  concurrency:

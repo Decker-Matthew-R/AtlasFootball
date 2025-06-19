@@ -13,10 +13,17 @@ server:
     shutdown: graceful
 spring:
     application:
-        name: atlas
+        name: atlasc
     output:
         ansi:
             enabled: always
+    security:
+        oauth2:
+            client:
+                registration:
+                    google:
+                        client-id: test-client-id
+                        client-secret: test-client-secret
     datasource:
         url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:atlas_test}
         username: ${POSTGRES_USERNAME:atlas_test}
