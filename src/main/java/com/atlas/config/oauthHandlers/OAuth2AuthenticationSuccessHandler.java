@@ -1,9 +1,12 @@
 package com.atlas.config.oauthHandlers;
 
+import com.atlas.user.repository.model.UserEntity;
+import com.atlas.user.service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -12,10 +15,12 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private static final Logger logger =
             LoggerFactory.getLogger(OAuth2AuthenticationSuccessHandler.class);
+    private final UserService userService;
 
     @Override
     public void onAuthenticationSuccess(
@@ -24,23 +29,23 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
-        // Log user details for debugging
         logger.info("=== OAuth2 Login Success! ===");
         logger.info("User Attributes: {}", oAuth2User.getAttributes());
 
-        // Extract user information
-        String email = oAuth2User.getAttribute("email");
-        String name = oAuth2User.getAttribute("name");
-        String picture = oAuth2User.getAttribute("picture");
-        String sub = oAuth2User.getAttribute("sub");
+        // Create or update user using UserService
+        UserEntity user = userService.createOrUpdateUserFromOAuth(oAuth2User, "google");
 
-        logger.info("Email: {}", email);
-        logger.info("Name: {}", name);
-        logger.info("Google Sub: {}", sub);
-        logger.info("Profile Picture: {}", picture);
+        logger.info(
+                "User processed: id={}, email={}, name={}",
+                user.getId(),
+                user.getEmail(),
+                userService.getFullName(user));
 
-        // For now, redirect to a success page (you'll update this later for JWT)
-        response.sendRedirect(
-                "http://localhost:3000/oauth-success?email=" + email + "&name=" + name);
+        // Redirect to frontend with user info
+        String redirectUrl =
+                String.format(
+                        "http://localhost:3000/oauth-success?userId=%d&email=%s&name=%s",
+                        user.getId(), user.getEmail(), userService.getFullName(user));
+        response.sendRedirect(redirectUrl);
     }
 }
