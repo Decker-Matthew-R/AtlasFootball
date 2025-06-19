@@ -13,7 +13,11 @@ import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+import { saveMetricEvent } from '@/metrics/client/MetricsClient';
+import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
+import { MetricEventType } from '@/metrics/model/MetricEventType';
 
 const pages = [
   { page: 'News', route: '/' },
@@ -29,6 +33,7 @@ export const Navbar = () => {
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
   const navigate = useNavigate();
+  const currentLocation = useLocation();
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -45,11 +50,27 @@ export const Navbar = () => {
     setAnchorElUser(null);
   };
 
-  const handleBrandingClick = () => {
+  const handleBrandingClick = (brandingClicked: string) => {
+    const metricEvent: MetricEventType = {
+      event: METRIC_EVENT_TYPE.BUTTON_CLICK,
+      eventMetadata: {
+        triggerId: brandingClicked,
+        screen: currentLocation.pathname,
+      },
+    };
+    saveMetricEvent(metricEvent);
     navigate('/');
   };
 
-  const handleMenuItemNavigation = (route: string) => {
+  const handleMenuItemNavigation = (route: string, buttonClicked: string) => {
+    const metricEvent: MetricEventType = {
+      event: METRIC_EVENT_TYPE.BUTTON_CLICK,
+      eventMetadata: {
+        triggerId: buttonClicked,
+        screen: currentLocation.pathname,
+      },
+    };
+    saveMetricEvent(metricEvent);
     navigate(route);
   };
 
@@ -59,12 +80,12 @@ export const Navbar = () => {
         <Toolbar disableGutters>
           <AdbIcon
             aria-label='atlas-logo'
-            onClick={handleBrandingClick}
+            onClick={() => handleBrandingClick('Atlas Logo')}
             sx={{ display: { xs: 'none', md: 'flex' }, mr: 1, cursor: 'pointer' }}
           />
           <Typography
             aria-label={'atlas-site-name'}
-            onClick={handleBrandingClick}
+            onClick={() => handleBrandingClick('Atlas Name')}
             variant='h6'
             noWrap
             component='a'
@@ -114,7 +135,7 @@ export const Navbar = () => {
                   key={page.page}
                   onClick={() => {
                     handleCloseNavMenu();
-                    handleMenuItemNavigation(page.route);
+                    handleMenuItemNavigation(page.route, page.page);
                   }}
                 >
                   <Typography sx={{ textAlign: 'center' }}>{page.page}</Typography>
@@ -124,12 +145,12 @@ export const Navbar = () => {
           </Box>
           <AdbIcon
             aria-label={'atlas-logo-mobile'}
-            onClick={handleBrandingClick}
+            onClick={() => handleBrandingClick('Atlas Logo')}
             sx={{ display: { xs: 'flex', md: 'none' }, mr: 1, cursor: 'pointer' }}
           />
           <Typography
             aria-label={'atlas-site-name-mobile'}
-            onClick={handleBrandingClick}
+            onClick={() => handleBrandingClick('Atlas Name')}
             variant='h5'
             noWrap
             component='a'
@@ -153,7 +174,7 @@ export const Navbar = () => {
                 key={page.page}
                 onClick={() => {
                   handleCloseNavMenu();
-                  handleMenuItemNavigation(page.route);
+                  handleMenuItemNavigation(page.route, page.page);
                 }}
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >
@@ -194,7 +215,7 @@ export const Navbar = () => {
                   key={setting.setting}
                   onClick={() => {
                     handleCloseUserMenu();
-                    handleMenuItemNavigation(setting.route);
+                    handleMenuItemNavigation(setting.route, setting.setting);
                   }}
                 >
                   <Typography sx={{ textAlign: 'center' }}>{setting.setting}</Typography>

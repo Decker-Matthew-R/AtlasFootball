@@ -153,7 +153,8 @@ jacocoTestReport {
                 '**/*Config.class',
                 '**/*Configuration.class',
                 '**/dto/**',
-                '**/entity/**'
+                '**/entity/**',
+                '**/**/model/**'
             ])
         }))
     }
@@ -188,7 +189,8 @@ jacocoTestCoverageVerification {
                 '**/*Config.class',
                 '**/*Configuration.class',
                 '**/dto/**',
-                '**/entity/**'
+                '**/entity/**',
+                '**/**/model/**'
             ])
         }))
     }

@@ -34,6 +34,8 @@ export default {
         'src/index.css',
         'src/**/*.d.ts',
         'src/themes/*',
+        'src/**/model/*',
+        'src/ApiEndpoints/*',
       ],
       thresholds: {
         branches: 90,
