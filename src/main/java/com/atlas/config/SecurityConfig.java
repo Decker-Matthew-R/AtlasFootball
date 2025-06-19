@@ -1,6 +1,9 @@
 package com.atlas.config;
 
+import com.atlas.config.oauthHandlers.OAuth2AuthenticationFailureHandler;
+import com.atlas.config.oauthHandlers.OAuth2AuthenticationSuccessHandler;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -17,6 +20,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+    @Autowired private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+
     @Bean
     SecurityFilterChain web(HttpSecurity http) throws Exception {
         http.cors(Customizer.withDefaults())
@@ -25,8 +32,35 @@ public class SecurityConfig {
                                 csrf.csrfTokenRepository(
                                                 CookieCsrfTokenRepository.withHttpOnlyFalse())
                                         .csrfTokenRequestHandler(
-                                                new CsrfTokenRequestAttributeHandler()))
-                .authorizeHttpRequests((authorize) -> authorize.anyRequest().permitAll());
+                                                new CsrfTokenRequestAttributeHandler())
+                                        .ignoringRequestMatchers(
+                                                "/oauth2/**",
+                                                "/login/oauth2/code/**",
+                                                "/api/save-metric"))
+                .authorizeHttpRequests(
+                        (authorize ->
+                                authorize
+                                        .requestMatchers(
+                                                "/",
+                                                "/index.html",
+                                                "/static/**",
+                                                "/assets/**",
+                                                "/favicon.ico",
+                                                "/manifest.json",
+                                                "/robots.txt",
+                                                "/*.js",
+                                                "/*.css",
+                                                "/error",
+                                                "/oauth2/**",
+                                                "/api/public/**",
+                                                "/api/save-metric")
+                                        .permitAll()
+                                        .anyRequest()
+                                        .authenticated()))
+                .oauth2Login(
+                        oauth2 ->
+                                oauth2.successHandler(oAuth2AuthenticationSuccessHandler)
+                                        .failureHandler(oAuth2AuthenticationFailureHandler));
         return http.build();
     }
 
