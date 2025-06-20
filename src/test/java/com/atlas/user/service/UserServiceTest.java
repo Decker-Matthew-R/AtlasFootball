@@ -350,8 +350,6 @@ class UserServiceTest {
         return mockUser;
     }
 
-    // Add these test methods to your UserServiceTest class
-
     @Test
     void createOrUpdateUserFromOAuth_shouldUpdateExistingUserWithNullName() {
         String email = "[email protected]";
@@ -370,7 +368,7 @@ class UserServiceTest {
         existingOAuth.setProviderUserId(providerUserId);
 
         when(oAuth2User.getAttribute("email")).thenReturn(email);
-        when(oAuth2User.getAttribute("name")).thenReturn(null); // NULL NAME
+        when(oAuth2User.getAttribute("name")).thenReturn(null);
         when(oAuth2User.getAttribute("sub")).thenReturn(providerUserId);
         when(oAuth2User.getAttribute("picture")).thenReturn("https://new-pic.com/pic.jpg");
 
@@ -382,10 +380,8 @@ class UserServiceTest {
         UserEntity result = userService.createOrUpdateUserFromOAuth(oAuth2User, providerName);
 
         assertThat(result).isEqualTo(existingUser);
-        // Name should remain unchanged since it was null
         assertThat(existingUser.getFirstName()).isEqualTo("John");
         assertThat(existingUser.getLastName()).isEqualTo("Doe");
-        // Profile picture should still be updated
         assertThat(existingUser.getProfilePictureUrl()).isEqualTo("https://new-pic.com/pic.jpg");
 
         verify(userRepository).save(existingUser);
@@ -414,7 +410,7 @@ class UserServiceTest {
         when(oAuth2User.getAttribute("email")).thenReturn(email);
         when(oAuth2User.getAttribute("name")).thenReturn(name);
         when(oAuth2User.getAttribute("sub")).thenReturn(providerUserId);
-        when(oAuth2User.getAttribute("picture")).thenReturn(null); // NULL PICTURE
+        when(oAuth2User.getAttribute("picture")).thenReturn(null);
 
         when(oauthProviderRepository.findByProviderNameAndProviderUserIdWithUser(
                         providerName, providerUserId))
@@ -424,10 +420,8 @@ class UserServiceTest {
         UserEntity result = userService.createOrUpdateUserFromOAuth(oAuth2User, providerName);
 
         assertThat(result).isEqualTo(existingUser);
-        // Name should be updated
         assertThat(existingUser.getFirstName()).isEqualTo("John");
         assertThat(existingUser.getLastName()).isEqualTo("Updated");
-        // Profile picture should remain unchanged since it was null
         assertThat(existingUser.getProfilePictureUrl()).isEqualTo("https://old-pic.com/pic.jpg");
 
         verify(userRepository).save(existingUser);
@@ -453,9 +447,9 @@ class UserServiceTest {
         existingOAuth.setProviderUserId(providerUserId);
 
         when(oAuth2User.getAttribute("email")).thenReturn(email);
-        when(oAuth2User.getAttribute("name")).thenReturn(null); // NULL NAME
+        when(oAuth2User.getAttribute("name")).thenReturn(null);
         when(oAuth2User.getAttribute("sub")).thenReturn(providerUserId);
-        when(oAuth2User.getAttribute("picture")).thenReturn(null); // NULL PICTURE
+        when(oAuth2User.getAttribute("picture")).thenReturn(null);
 
         when(oauthProviderRepository.findByProviderNameAndProviderUserIdWithUser(
                         providerName, providerUserId))
@@ -465,7 +459,6 @@ class UserServiceTest {
         UserEntity result = userService.createOrUpdateUserFromOAuth(oAuth2User, providerName);
 
         assertThat(result).isEqualTo(existingUser);
-        // Both name and profile picture should remain unchanged
         assertThat(existingUser.getFirstName()).isEqualTo("John");
         assertThat(existingUser.getLastName()).isEqualTo("Doe");
         assertThat(existingUser.getProfilePictureUrl()).isEqualTo("https://old-pic.com/pic.jpg");

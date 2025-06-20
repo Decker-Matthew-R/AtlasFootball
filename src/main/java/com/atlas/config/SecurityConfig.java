@@ -1,5 +1,6 @@
 package com.atlas.config;
 
+import com.atlas.config.jwt.JwtAuthenticationFilter;
 import com.atlas.config.oauthHandlers.OAuth2AuthenticationFailureHandler;
 import com.atlas.config.oauthHandlers.OAuth2AuthenticationSuccessHandler;
 import java.util.List;
@@ -9,7 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
@@ -24,9 +27,13 @@ public class SecurityConfig {
 
     @Autowired private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
+    @Autowired private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Bean
     SecurityFilterChain web(HttpSecurity http) throws Exception {
         http.cors(Customizer.withDefaults())
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(
                         csrf ->
                                 csrf.csrfTokenRepository(
@@ -36,7 +43,10 @@ public class SecurityConfig {
                                         .ignoringRequestMatchers(
                                                 "/oauth2/**",
                                                 "/login/oauth2/code/**",
-                                                "/api/save-metric"))
+                                                "/api/save-metric",
+                                                "/api/auth/**"))
+                .addFilterBefore(
+                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(
                         (authorize ->
                                 authorize
@@ -67,7 +77,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080"));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

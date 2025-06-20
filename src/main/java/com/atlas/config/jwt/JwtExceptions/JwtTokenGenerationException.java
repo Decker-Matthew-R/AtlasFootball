@@ -1,4 +1,4 @@
-package com.atlas.jwt.service;
+package com.atlas.config.jwt.JwtExceptions;
 
 public class JwtTokenGenerationException extends RuntimeException {
 
