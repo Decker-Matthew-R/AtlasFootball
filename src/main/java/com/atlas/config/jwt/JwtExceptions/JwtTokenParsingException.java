@@ -1,4 +1,4 @@
-package com.atlas.jwt.service;
+package com.atlas.config.jwt.JwtExceptions;
 
 /** Exception thrown when JWT token parsing fails */
 public class JwtTokenParsingException extends RuntimeException {

@@ -2,8 +2,8 @@ package com.atlas.jwt.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 
+import com.atlas.config.jwt.JwtExceptions.JwtTokenGenerationException;
 import org.junit.jupiter.api.Test;
 
 class JwtTokenGenerationExceptionTest {

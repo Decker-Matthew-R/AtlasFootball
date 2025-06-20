@@ -1,8 +1,9 @@
 package com.atlas.config.oauthHandlers;
 
-import com.atlas.jwt.service.JwtTokenProvider;
+import com.atlas.config.jwt.JwtTokenProvider;
 import com.atlas.user.repository.model.UserEntity;
 import com.atlas.user.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -64,9 +66,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         response.sendRedirect(redirectUrl);
     }
 
-    /** Determine redirect URL based on configuration or request context */
     private String determineRedirectUrl(HttpServletRequest request) {
-        // If frontend URL is explicitly configured, use it
         if (frontendUrl != null && !frontendUrl.trim().isEmpty()) {
             return frontendUrl.endsWith("/") ? frontendUrl : frontendUrl + "/";
         }
@@ -97,25 +97,36 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private void setUserInfoCookie(HttpServletResponse response, UserEntity user) {
         try {
-            String userInfo =
-                    String.format(
-                            "id=%d&email=%s&name=%s",
-                            user.getId(),
-                            URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8),
-                            URLEncoder.encode(
-                                    userService.getFullName(user), StandardCharsets.UTF_8));
+            Map<String, Object> userData =
+                    Map.of(
+                            "id", user.getId(),
+                            "email", user.getEmail(),
+                            "name", userService.getFullName(user),
+                            "firstName", user.getFirstName(),
+                            "lastName", user.getLastName(),
+                            "profilePicture",
+                                    user.getProfilePictureUrl() != null
+                                            ? user.getProfilePictureUrl()
+                                            : "");
 
-            Cookie userCookie = new Cookie("user", userInfo);
+            ObjectMapper objectMapper = new ObjectMapper();
+            String userInfoJson = objectMapper.writeValueAsString(userData);
+
+            String encodedUserInfo = URLEncoder.encode(userInfoJson, StandardCharsets.UTF_8);
+
+            Cookie userCookie = new Cookie("user_info", encodedUserInfo);
             userCookie.setHttpOnly(false);
-            userCookie.setSecure(false);
+            userCookie.setSecure(false); // Set to true in production with HTTPS
             userCookie.setPath("/");
             userCookie.setDomain("localhost");
             userCookie.setMaxAge(24 * 60 * 60);
             response.addCookie(userCookie);
 
-            log.info("User info cookie set for frontend convenience");
+            log.info(
+                    "Enhanced user info cookie set with navbar data for user: id={}", user.getId());
+
         } catch (Exception e) {
-            log.error("Failed to set user info cookie", e);
+            log.error("Failed to set enhanced user info cookie for user: id={}", user.getId(), e);
         }
     }
 }

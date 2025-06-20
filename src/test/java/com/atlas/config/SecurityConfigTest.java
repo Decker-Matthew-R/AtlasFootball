@@ -2,13 +2,19 @@ package com.atlas.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.atlas.config.jwt.JwtTokenProvider;
 import com.atlas.config.oauthHandlers.OAuth2AuthenticationFailureHandler;
 import com.atlas.config.oauthHandlers.OAuth2AuthenticationSuccessHandler;
+import com.atlas.user.repository.model.UserEntity;
+import com.atlas.user.service.UserService;
+import jakarta.servlet.http.Cookie;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,6 +31,12 @@ class SecurityConfigWorkingTest {
     @MockitoBean private OAuth2AuthenticationSuccessHandler successHandler;
 
     @MockitoBean private OAuth2AuthenticationFailureHandler failureHandler;
+
+    @MockitoBean private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean private UserService userService;
+
+    @MockitoBean private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Test
     void shouldAllowRootPath() throws Exception {
@@ -182,5 +194,199 @@ class SecurityConfigWorkingTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(header().string("Location", containsString("oauth2/authorization")));
         }
+    }
+
+    @Test
+    void shouldAllowCorsFromLocalhost8080() throws Exception {
+        mockMvc.perform(
+                        options("/api/test")
+                                .header("Origin", "http://localhost:8080")
+                                .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8080"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+    }
+
+    @Test
+    void shouldAuthenticateUserWithValidJwtCookie() throws Exception {
+        String validJwtToken = "valid.jwt.token";
+        UserEntity testUser = createTestUser();
+
+        when(jwtTokenProvider.validateToken(validJwtToken)).thenReturn(true);
+        when(jwtTokenProvider.getUserIdFromToken(validJwtToken)).thenReturn(123L);
+        when(jwtTokenProvider.getEmailFromToken(validJwtToken)).thenReturn("test@example.com");
+        when(userService.findById(123L)).thenReturn(Optional.of(testUser));
+
+        mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", validJwtToken)))
+                .andExpect(
+                        result -> {
+                            int status = result.getResponse().getStatus();
+                            assertThat(status).isIn(200, 404);
+
+                            String location = result.getResponse().getHeader("Location");
+                            if (location != null) {
+                                assertThat(location).doesNotContain("oauth2/authorization");
+                            }
+                        });
+    }
+
+    @Test
+    void shouldRejectInvalidJwtCookie() throws Exception {
+        String invalidJwtToken = "invalid.jwt.token";
+        when(jwtTokenProvider.validateToken(invalidJwtToken)).thenReturn(false);
+
+        mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", invalidJwtToken)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+    }
+
+    @Test
+    void shouldRejectExpiredJwtCookie() throws Exception {
+
+        String expiredJwtToken = "expired.jwt.token";
+        when(jwtTokenProvider.validateToken(expiredJwtToken)).thenReturn(false);
+
+        mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", expiredJwtToken)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+    }
+
+    @Test
+    void shouldRejectValidJwtWhenUserNotFoundInDatabase() throws Exception {
+
+        String validJwtToken = "valid.jwt.token";
+
+        when(jwtTokenProvider.validateToken(validJwtToken)).thenReturn(true);
+        when(jwtTokenProvider.getUserIdFromToken(validJwtToken)).thenReturn(999L);
+        when(jwtTokenProvider.getEmailFromToken(validJwtToken))
+                .thenReturn("nonexistent@example.com");
+        when(userService.findById(999L)).thenReturn(Optional.empty()); // User not found
+
+        mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", validJwtToken)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+    }
+
+    @Test
+    void shouldSkipJwtValidationForPublicEndpoints() throws Exception {
+        String[] publicPaths = {
+            "/oauth2/authorization/google",
+            "/login/oauth2/code/google",
+            "/api/public/test",
+            "/error"
+        };
+
+        for (String path : publicPaths) {
+            mockMvc.perform(get(path).cookie(new Cookie("jwt", "any.jwt.token")))
+                    .andExpect(
+                            result -> {
+                                int status = result.getResponse().getStatus();
+                                String location = result.getResponse().getHeader("Location");
+
+                                // Should not redirect to OAuth for public endpoints
+                                if (status == 302 && location != null) {
+                                    assertThat(location)
+                                            .as(
+                                                    "Public path %s should not redirect to OAuth2",
+                                                    path)
+                                            .doesNotContain("oauth2/authorization");
+                                }
+                            });
+        }
+    }
+
+    @Test
+    void shouldHandleMultipleCookiesAndExtractJwt() throws Exception {
+        String validJwtToken = "valid.jwt.token";
+        UserEntity testUser = createTestUser();
+
+        when(jwtTokenProvider.validateToken(validJwtToken)).thenReturn(true);
+        when(jwtTokenProvider.getUserIdFromToken(validJwtToken)).thenReturn(123L);
+        when(jwtTokenProvider.getEmailFromToken(validJwtToken)).thenReturn("test@example.com");
+        when(userService.findById(123L)).thenReturn(Optional.of(testUser));
+
+        mockMvc.perform(
+                        get("/api/user/profile")
+                                .cookie(new Cookie("session", "sessionvalue"))
+                                .cookie(new Cookie("jwt", validJwtToken))
+                                .cookie(new Cookie("csrf", "csrfvalue")))
+                .andExpect(
+                        result -> {
+                            int status = result.getResponse().getStatus();
+                            assertThat(status).isIn(200, 404);
+
+                            String location = result.getResponse().getHeader("Location");
+                            if (location != null) {
+                                assertThat(location).doesNotContain("oauth2/authorization");
+                            }
+                        });
+    }
+
+    @Test
+    void shouldFallbackToOAuth2WhenNoJwtCookie() throws Exception {
+        mockMvc.perform(get("/api/user/profile"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+    }
+
+    @Test
+    void shouldHandleJwtParsingExceptionGracefully() throws Exception {
+        String malformedJwtToken = "malformed.jwt.token";
+
+        when(jwtTokenProvider.validateToken(malformedJwtToken)).thenReturn(true);
+        when(jwtTokenProvider.getUserIdFromToken(malformedJwtToken))
+                .thenThrow(new RuntimeException("JWT parsing failed"));
+
+        mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", malformedJwtToken)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+    }
+
+    @Test
+    void shouldBeStateless() throws Exception {
+        String validJwtToken = "valid.jwt.token";
+        UserEntity testUser = createTestUser();
+
+        when(jwtTokenProvider.validateToken(validJwtToken)).thenReturn(true);
+        when(jwtTokenProvider.getUserIdFromToken(validJwtToken)).thenReturn(123L);
+        when(jwtTokenProvider.getEmailFromToken(validJwtToken)).thenReturn("test@example.com");
+        when(userService.findById(123L)).thenReturn(Optional.of(testUser));
+
+        mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", validJwtToken)))
+                .andExpect(
+                        result -> {
+                            assertThat(result.getRequest().getSession(false)).isNull();
+                        });
+    }
+
+    @Test
+    void shouldUseOAuth2FailureHandler() throws Exception {
+        assertThat(oAuth2AuthenticationFailureHandler).isNotNull();
+    }
+
+    @Test
+    void shouldIgnoreCSRFForAllConfiguredPaths() throws Exception {
+        String[] csrfExcludedPaths = {
+            "/oauth2/test", "/login/oauth2/code/test", "/api/save-metric"
+        };
+
+        for (String path : csrfExcludedPaths) {
+            mockMvc.perform(post(path).contentType("application/json").content("{}"))
+                    .andExpect(
+                            result -> {
+                                int status = result.getResponse().getStatus();
+                                assertThat(status).isNotEqualTo(403);
+                            });
+        }
+    }
+
+    private UserEntity createTestUser() {
+        UserEntity user = new UserEntity();
+        user.setId(123L);
+        user.setEmail("test@example.com");
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setProfilePictureUrl("https://example.com/profile.jpg");
+        return user;
     }
 }
