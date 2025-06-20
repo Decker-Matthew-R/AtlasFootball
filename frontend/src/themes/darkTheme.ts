@@ -153,7 +153,7 @@ const darkTheme = createTheme({
       fontSize: '0.875rem',
       fontWeight: 500,
       lineHeight: 1.75,
-      textTransform: 'none', // Remove uppercase
+      textTransform: 'none',
     },
   },
   spacing: 8,

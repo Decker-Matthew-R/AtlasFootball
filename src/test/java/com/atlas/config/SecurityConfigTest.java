@@ -98,8 +98,6 @@ class SecurityConfigWorkingTest {
                 .andExpect(
                         result -> {
                             int status = result.getResponse().getStatus();
-                            // Security should pass - 404 means no controller, but security allowed
-                            // it
                             assertThat(status).isIn(200, 404);
                         });
     }
@@ -126,12 +124,10 @@ class SecurityConfigWorkingTest {
 
     @Test
     void shouldIgnoreCSRFForOAuth2Paths() throws Exception {
-        // OAuth2 paths should work without CSRF token
         mockMvc.perform(post("/oauth2/test"))
                 .andExpect(
                         result -> {
                             int status = result.getResponse().getStatus();
-                            // Should be allowed (not 403 Forbidden due to CSRF)
                             assertThat(status).isIn(200, 404);
                         });
 
@@ -139,7 +135,6 @@ class SecurityConfigWorkingTest {
                 .andExpect(
                         result -> {
                             int status = result.getResponse().getStatus();
-                            // Should be allowed (not 403 Forbidden due to CSRF)
                             assertThat(status).isIn(200, 404);
                         });
     }
@@ -153,7 +148,7 @@ class SecurityConfigWorkingTest {
                 .andExpect(
                         result -> {
                             int status = result.getResponse().getStatus();
-                            assertThat(status).isIn(200, 404); // Security passed
+                            assertThat(status).isIn(200, 404);
                         });
     }
 
