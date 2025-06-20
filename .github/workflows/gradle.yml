@@ -135,7 +135,6 @@ jobs:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
 
-
     Dependency-Submission-Scan:
         runs-on: ubuntu-latest
         permissions:

@@ -1,5 +1,7 @@
-package com.atlas.jwt.service;
+package com.atlas.config.jwt;
 
+import com.atlas.config.jwt.JwtExceptions.JwtTokenGenerationException;
+import com.atlas.config.jwt.JwtExceptions.JwtTokenParsingException;
 import com.atlas.user.repository.model.UserEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -32,12 +34,6 @@ public class JwtTokenProvider {
         log.info("JwtTokenProvider initialized with expiration: {} ms", jwtExpirationInMs);
     }
 
-    /**
-     * Generate JWT token for authenticated user
-     *
-     * @param user The authenticated user
-     * @return JWT token string
-     */
     public String generateToken(UserEntity user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null");
@@ -75,12 +71,6 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Validate JWT token
-     *
-     * @param token JWT token to validate
-     * @return true if valid, false otherwise
-     */
     public boolean validateToken(String token) {
         if (token == null || token.trim().isEmpty()) {
             log.debug("JWT token validation failed: token is null or empty");
@@ -99,13 +89,6 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Extract user ID from JWT token
-     *
-     * @param token JWT token
-     * @return User ID
-     * @throws JwtTokenParsingException if token is invalid
-     */
     public Long getUserIdFromToken(String token) {
         try {
             Claims claims = getAllClaimsFromToken(token);
@@ -116,13 +99,6 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Extract email from JWT token
-     *
-     * @param token JWT token
-     * @return User email
-     * @throws JwtTokenParsingException if token is invalid
-     */
     public String getEmailFromToken(String token) {
         try {
             Claims claims = getAllClaimsFromToken(token);
@@ -133,13 +109,6 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Extract expiration date from JWT token
-     *
-     * @param token JWT token
-     * @return Expiration date
-     * @throws JwtTokenParsingException if token is invalid
-     */
     public Date getExpirationDateFromToken(String token) {
         try {
             Claims claims = getAllClaimsFromToken(token);
@@ -150,12 +119,6 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Check if JWT token is expired
-     *
-     * @param token JWT token
-     * @return true if expired, false otherwise
-     */
     public boolean isTokenExpired(String token) {
         try {
             Date expiration = getExpirationDateFromToken(token);
@@ -166,24 +129,17 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Get token expiration time in milliseconds
-     *
-     * @return Expiration time in milliseconds
-     */
     public int getExpirationTimeMs() {
         return jwtExpirationInMs;
     }
 
-    /** Build claims map for JWT token */
-    private Map<String, Object> buildClaims(UserEntity user) {
+    public Map<String, Object> buildClaims(UserEntity user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
         claims.put("email", user.getEmail());
         claims.put("firstName", user.getFirstName());
         claims.put("lastName", user.getLastName());
 
-        // Optional claims - only add if not null
         if (user.getProfilePictureUrl() != null) {
             claims.put("profilePicture", user.getProfilePictureUrl());
         }
@@ -191,7 +147,6 @@ public class JwtTokenProvider {
         return claims;
     }
 
-    /** Get all claims from JWT token */
     private Claims getAllClaimsFromToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)

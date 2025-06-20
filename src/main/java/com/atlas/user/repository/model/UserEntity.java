@@ -62,4 +62,9 @@ public class UserEntity {
     public void updateLastLogin() {
         this.lastLogin = LocalDateTime.now();
     }
+
+    @Override
+    public String toString() {
+        return String.format("UserEntity{id=%d, email='%s'}", id, email);
+    }
 }

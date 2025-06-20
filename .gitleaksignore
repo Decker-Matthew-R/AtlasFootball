@@ -1,0 +1,6 @@
+src/test/java/com/atlas/jwt/service/JwtTokenProviderTest.java
+**/test/**
+**/*Test.java
+**/*Tests.java*
+eyJhbGciOiJIUzUxMiJ9.eyJ1c2VySWQiOjEyMywiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIn0.wrong_signature_here:src/test/java/com/atlas/jwt/service/JwtTokenProviderTest.java
+
