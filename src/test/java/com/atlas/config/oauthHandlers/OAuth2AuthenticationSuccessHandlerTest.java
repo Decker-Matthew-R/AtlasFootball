@@ -1,20 +1,25 @@
 package com.atlas.config.oauthHandlers;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
+import com.atlas.jwt.service.JwtTokenGenerationException;
+import com.atlas.jwt.service.JwtTokenProvider;
 import com.atlas.user.repository.model.UserEntity;
 import com.atlas.user.service.UserService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
@@ -25,6 +30,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Mock private UserService userService;
 
+    @Mock private JwtTokenProvider jwtTokenProvider;
+
     @Mock private HttpServletRequest request;
 
     @Mock private HttpServletResponse response;
@@ -33,178 +40,394 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Mock private OAuth2User oAuth2User;
 
-    @InjectMocks private OAuth2AuthenticationSuccessHandler handler;
-
     private UserEntity mockUser;
+    private Map<String, Object> oauthAttributes;
+    private String mockJwtToken;
+
+    // We'll create the handler manually to test different frontend URL scenarios
+    private OAuth2AuthenticationSuccessHandler handler;
 
     @BeforeEach
     void setUp() {
+        // Set up mock user
         mockUser = new UserEntity();
         mockUser.setId(123L);
         mockUser.setEmail("john.doe@example.com");
         mockUser.setFirstName("John");
         mockUser.setLastName("Doe");
+
+        // Set up OAuth attributes
+        oauthAttributes = new HashMap<>();
+        oauthAttributes.put("email", "john.doe@example.com");
+        oauthAttributes.put("name", "John Doe");
+        oauthAttributes.put("sub", "google123");
+        oauthAttributes.put("picture", "https://example.com/profile.jpg");
+
+        // Mock JWT token
+        mockJwtToken =
+                "eyJhbGciOiJIUzUxMiJ9.eyJ1c2VySWQiOjEyMywiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.signature";
     }
 
     @Test
-    void onAuthenticationSuccess_shouldProcessUserAndRedirect() throws Exception {
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("email", "john.doe@example.com");
-        attributes.put("name", "John Doe");
-        attributes.put("sub", "google123");
-        attributes.put("picture", "https://example.com/picture.jpg");
+    void onAuthenticationSuccess_shouldProcessUserAndSetCookiesWithConfiguredUrl()
+            throws Exception {
+        // Given - Handler with configured frontend URL
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
-        when(oAuth2User.getAttributes()).thenReturn(attributes);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
         when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
         when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
 
+        // When
         handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        verify(userService).createOrUpdateUserFromOAuth(oAuth2User, "google");
+        verify(jwtTokenProvider).generateToken(mockUser);
+
+        // Verify JWT cookie
+        ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+        verify(response, times(2)).addCookie(cookieCaptor.capture());
+
+        Cookie jwtCookie = cookieCaptor.getAllValues().get(0);
+        assertThat(jwtCookie.getName()).isEqualTo("jwt");
+        assertThat(jwtCookie.getValue()).isEqualTo(mockJwtToken);
+        assertThat(jwtCookie.isHttpOnly()).isTrue();
+        assertThat(jwtCookie.getSecure()).isFalse();
+        assertThat(jwtCookie.getPath()).isEqualTo("/");
+        assertThat(jwtCookie.getDomain()).isEqualTo("localhost");
+        assertThat(jwtCookie.getMaxAge()).isEqualTo(24 * 60 * 60);
+
+        // Verify user info cookie
+        Cookie userCookie = cookieCaptor.getAllValues().get(1);
+        assertThat(userCookie.getName()).isEqualTo("user");
+        assertThat(userCookie.getValue())
+                .isEqualTo("id=123&email=john.doe%40example.com&name=John+Doe");
+        assertThat(userCookie.isHttpOnly()).isFalse();
+
+        // Verify redirect
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
+        verify(response).sendRedirect(redirectCaptor.capture());
+        assertThat(redirectCaptor.getValue()).isEqualTo("http://localhost:3000/");
+    }
+
+    @Test
+    void onAuthenticationSuccess_shouldUseReferrerForRedirectWhenNoConfiguredUrl()
+            throws Exception {
+        // Given - Handler with no configured frontend URL
+        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, "");
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
+        when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
+        when(request.getHeader("Referer")).thenReturn("http://localhost:8080/some-page");
+
+        // When
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
+        verify(response).sendRedirect(redirectCaptor.capture());
+        assertThat(redirectCaptor.getValue()).isEqualTo("http://localhost:8080/");
+    }
+
+    @Test
+    void onAuthenticationSuccess_shouldUsePort3000FromReferrer() throws Exception {
+        // Given - Handler with no configured URL, referrer has port 3000
+        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, null);
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
+        when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
+        when(request.getHeader("Referer")).thenReturn("http://localhost:3000/oauth/login");
+
+        // When
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
+        verify(response).sendRedirect(redirectCaptor.capture());
+        assertThat(redirectCaptor.getValue()).isEqualTo("http://localhost:3000/");
+    }
+
+    @Test
+    void onAuthenticationSuccess_shouldUseDefaultWhenNoReferrer() throws Exception {
+        // Given - No configured URL and no referrer
+        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, "   ");
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
+        when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
+        when(request.getHeader("Referer")).thenReturn(null);
+
+        // When
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
+        verify(response).sendRedirect(redirectCaptor.capture());
+        assertThat(redirectCaptor.getValue()).isEqualTo("http://localhost:3000/");
+    }
+
+    @Test
+    void onAuthenticationSuccess_shouldAddSlashToConfiguredUrlWithoutSlash() throws Exception {
+        // Given - Configured URL without trailing slash
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
+        when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
+
+        // When
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
+        verify(response).sendRedirect(redirectCaptor.capture());
+        assertThat(redirectCaptor.getValue()).isEqualTo("http://localhost:3000/");
+    }
+
+    @Test
+    void onAuthenticationSuccess_shouldNotAddSlashToConfiguredUrlWithSlash() throws Exception {
+        // Given - Configured URL with trailing slash
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000/");
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
+        when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
+
+        // When
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
+        verify(response).sendRedirect(redirectCaptor.capture());
+        assertThat(redirectCaptor.getValue()).isEqualTo("http://localhost:3000/");
+    }
+
+    @Test
+    void onAuthenticationSuccess_shouldHandleSpecialCharactersInUserData() throws Exception {
+        // Given - User with special characters
+        UserEntity specialCharUser = new UserEntity();
+        specialCharUser.setId(456L);
+        specialCharUser.setEmail("user+test@example.com");
+        specialCharUser.setFirstName("José");
+        specialCharUser.setLastName("María & Co");
+
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google"))
+                .thenReturn(specialCharUser);
+        when(userService.getFullName(specialCharUser)).thenReturn("José María & Co");
+        when(jwtTokenProvider.generateToken(specialCharUser)).thenReturn(mockJwtToken);
+
+        // When
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+        verify(response, times(2)).addCookie(cookieCaptor.capture());
+
+        Cookie userCookie = cookieCaptor.getAllValues().get(1);
+        String expectedUserInfo =
+                String.format(
+                        "id=456&email=%s&name=%s",
+                        URLEncoder.encode("user+test@example.com", StandardCharsets.UTF_8),
+                        URLEncoder.encode("José María & Co", StandardCharsets.UTF_8));
+        assertThat(userCookie.getValue()).isEqualTo(expectedUserInfo);
+    }
+
+    @Test
+    void onAuthenticationSuccess_shouldPropagateJwtGenerationException() throws Exception {
+        // Given
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
+        when(jwtTokenProvider.generateToken(mockUser))
+                .thenThrow(new JwtTokenGenerationException("JWT generation failed"));
+
+        // When & Then
+        assertThatThrownBy(() -> handler.onAuthenticationSuccess(request, response, authentication))
+                .isInstanceOf(JwtTokenGenerationException.class)
+                .hasMessage("JWT generation failed");
 
         verify(userService).createOrUpdateUserFromOAuth(oAuth2User, "google");
-
-        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
-        verify(response).sendRedirect(redirectCaptor.capture());
-
-        String redirectUrl = redirectCaptor.getValue();
-        String expectedUrl =
-                "http://localhost:3000/oauth-success?userId=123&email=john.doe@example.com&name=John Doe";
-        assertEquals(expectedUrl, redirectUrl);
+        verify(jwtTokenProvider).generateToken(mockUser);
+        verify(response, never()).addCookie(any()); // Should not set cookies on JWT failure
+        verify(response, never()).sendRedirect(any()); // Should not redirect on JWT failure
     }
 
     @Test
-    void onAuthenticationSuccess_shouldHandleSpecialCharactersInName() throws Exception {
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("email", "user@example.com");
-        attributes.put("name", "José María");
-        attributes.put("sub", "google456");
-
-        UserEntity userWithSpecialChars = new UserEntity();
-        userWithSpecialChars.setId(456L);
-        userWithSpecialChars.setEmail("user@example.com");
-        userWithSpecialChars.setFirstName("José");
-        userWithSpecialChars.setLastName("María");
+    void onAuthenticationSuccess_shouldPropagateUserServiceException() throws Exception {
+        // Given
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
-        when(oAuth2User.getAttributes()).thenReturn(attributes);
-        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google"))
-                .thenReturn(userWithSpecialChars);
-        when(userService.getFullName(userWithSpecialChars)).thenReturn("José María");
-
-        handler.onAuthenticationSuccess(request, response, authentication);
-
-        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
-        verify(response).sendRedirect(redirectCaptor.capture());
-
-        String redirectUrl = redirectCaptor.getValue();
-        assertTrue(redirectUrl.contains("userId=456"));
-        assertTrue(redirectUrl.contains("email=user@example.com"));
-        assertTrue(redirectUrl.contains("name=José María"));
-    }
-
-    @Test
-    void onAuthenticationSuccess_shouldHandleEmptyName() throws Exception {
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("email", "noname@example.com");
-        attributes.put("sub", "google789");
-
-        UserEntity userWithoutName = new UserEntity();
-        userWithoutName.setId(789L);
-        userWithoutName.setEmail("noname@example.com");
-        userWithoutName.setFirstName("Unknown");
-        userWithoutName.setLastName("");
-
-        when(authentication.getPrincipal()).thenReturn(oAuth2User);
-        when(oAuth2User.getAttributes()).thenReturn(attributes);
-        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google"))
-                .thenReturn(userWithoutName);
-        when(userService.getFullName(userWithoutName)).thenReturn("Unknown ");
-
-        handler.onAuthenticationSuccess(request, response, authentication);
-
-        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
-        verify(response).sendRedirect(redirectCaptor.capture());
-
-        String redirectUrl = redirectCaptor.getValue();
-        assertTrue(redirectUrl.contains("userId=789"));
-        assertTrue(redirectUrl.contains("email=noname@example.com"));
-        assertTrue(redirectUrl.contains("name=Unknown "));
-    }
-
-    @Test
-    void onAuthenticationSuccess_shouldHandleUserServiceException() throws Exception {
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("email", "error@example.com");
-        attributes.put("sub", "google999");
-
-        when(authentication.getPrincipal()).thenReturn(oAuth2User);
-        when(oAuth2User.getAttributes()).thenReturn(attributes);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
         when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google"))
                 .thenThrow(new RuntimeException("Database error"));
 
-        assertThrows(
-                RuntimeException.class,
-                () -> {
-                    handler.onAuthenticationSuccess(request, response, authentication);
-                });
+        // When & Then
+        assertThatThrownBy(() -> handler.onAuthenticationSuccess(request, response, authentication))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Database error");
 
         verify(userService).createOrUpdateUserFromOAuth(oAuth2User, "google");
-        verify(response, never()).sendRedirect(any());
+        verify(jwtTokenProvider, never()).generateToken(any()); // Should not call JWT generation
+        verify(response, never()).addCookie(any()); // Should not set cookies
+        verify(response, never()).sendRedirect(any()); // Should not redirect
     }
 
     @Test
-    void onAuthenticationSuccess_shouldHandleIOException() throws Exception {
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("email", "io@example.com");
-        attributes.put("sub", "google111");
+    void onAuthenticationSuccess_shouldHandleIOExceptionDuringRedirect() throws Exception {
+        // Given
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
-        when(oAuth2User.getAttributes()).thenReturn(attributes);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
         when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
         when(userService.getFullName(mockUser)).thenReturn("John Doe");
-
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
         doThrow(new IOException("Network error")).when(response).sendRedirect(any());
 
-        assertThrows(
-                IOException.class,
-                () -> {
-                    handler.onAuthenticationSuccess(request, response, authentication);
-                });
+        // When & Then
+        assertThatThrownBy(() -> handler.onAuthenticationSuccess(request, response, authentication))
+                .isInstanceOf(IOException.class)
+                .hasMessage("Network error");
 
         verify(userService).createOrUpdateUserFromOAuth(oAuth2User, "google");
+        verify(jwtTokenProvider).generateToken(mockUser);
+        verify(response, times(2)).addCookie(any()); // Cookies should still be set
     }
 
     @Test
-    void onAuthenticationSuccess_shouldUseCorrectProvider() throws Exception {
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("email", "provider@example.com");
-        attributes.put("sub", "google222");
+    void onAuthenticationSuccess_shouldUseCorrectProviderName() throws Exception {
+        // Given
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
-        when(oAuth2User.getAttributes()).thenReturn(attributes);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
         when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
         when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
 
+        // When
         handler.onAuthenticationSuccess(request, response, authentication);
 
+        // Then
         verify(userService).createOrUpdateUserFromOAuth(eq(oAuth2User), eq("google"));
     }
 
     @Test
-    void onAuthenticationSuccess_shouldLogUserAttributes() throws Exception {
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("email", "log@example.com");
-        attributes.put("name", "Log User");
-        attributes.put("sub", "google333");
+    void onAuthenticationSuccess_shouldLogUserAttributesAndProcessing() throws Exception {
+        // Given
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
-        when(oAuth2User.getAttributes()).thenReturn(attributes);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
         when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
         when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
 
+        // When
         handler.onAuthenticationSuccess(request, response, authentication);
 
-        verify(oAuth2User, atLeast(1)).getAttributes();
+        // Then
+        verify(oAuth2User, atLeast(1)).getAttributes(); // Should log user attributes
         verify(userService).createOrUpdateUserFromOAuth(oAuth2User, "google");
+        verify(jwtTokenProvider).generateToken(mockUser);
+    }
+
+    @Test
+    void onAuthenticationSuccess_shouldHandleReferrerWithoutPortInfo() throws Exception {
+        // Given - Referrer doesn't contain port info
+        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, "");
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
+        when(userService.getFullName(mockUser)).thenReturn("John Doe");
+        when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
+        when(request.getHeader("Referer")).thenReturn("http://localhost/some-page");
+
+        // When
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        ArgumentCaptor<String> redirectCaptor = ArgumentCaptor.forClass(String.class);
+        verify(response).sendRedirect(redirectCaptor.capture());
+        assertThat(redirectCaptor.getValue())
+                .isEqualTo("http://localhost:3000/"); // Should use default
+    }
+
+    @Test
+    void setUserInfoCookie_shouldHandleEncodingExceptionGracefully() throws Exception {
+        // Given - This test verifies the catch block in setUserInfoCookie
+        UserEntity userWithProblematicData = new UserEntity();
+        userWithProblematicData.setId(999L);
+        userWithProblematicData.setEmail("test@example.com");
+        userWithProblematicData.setFirstName("Test");
+        userWithProblematicData.setLastName("User");
+
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, jwtTokenProvider, "http://localhost:3000");
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
+        when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google"))
+                .thenReturn(userWithProblematicData);
+        when(userService.getFullName(userWithProblematicData)).thenReturn("Test User");
+        when(jwtTokenProvider.generateToken(userWithProblematicData)).thenReturn(mockJwtToken);
+
+        // Mock addCookie to throw exception for user cookie (second call)
+        doNothing().when(response).addCookie(any()); // First call (JWT cookie) succeeds
+        doThrow(new RuntimeException("Cookie error"))
+                .when(response)
+                .addCookie(argThat(cookie -> "user".equals(cookie.getName()))); // Second call (user
+        // cookie) fails
+
+        // When
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Then
+        verify(userService).createOrUpdateUserFromOAuth(oAuth2User, "google");
+        verify(jwtTokenProvider).generateToken(userWithProblematicData);
+        verify(response, times(2)).addCookie(any()); // Both cookies attempted
+        verify(response).sendRedirect(any()); // Should still redirect despite user cookie failure
     }
 }

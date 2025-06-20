@@ -60,6 +60,10 @@ application:
         post-logout-redirect-uri: "{baseUrl}"
     feature-flags:
         useJobDescriptionAndPersonaMetrics: false
+app:
+    jwt:
+        secret: ${JWT_SECRET:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ab}
+        expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 #atlas:
 #  concurrency:

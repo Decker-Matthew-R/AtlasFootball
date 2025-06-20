@@ -71,7 +71,12 @@ application:
         post-logout-redirect-uri: "{baseUrl}"
     feature-flags:
         useJobDescriptionAndPersonaMetrics: false
-
+app:
+    frontend:
+        url: ${FRONTEND_URL:http://localhost:3000}
+    jwt:
+        secret: ${JWT_SECRET:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ab}
+        expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 #atlas:
 #  concurrency:
 #    timeout-in-seconds: 300
