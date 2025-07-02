@@ -150,7 +150,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                language: [ 'java', 'javascript' ]
+                language: [ 'java-kotlin', 'javascript-typescript', 'actions' ]
         steps:
             -   name: Checkout repository
                 uses: actions/checkout@v4
@@ -185,6 +185,7 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: write
+            actions: write
 
         steps:
             -   uses: actions/checkout@v4
