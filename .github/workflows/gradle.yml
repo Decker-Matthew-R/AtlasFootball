@@ -127,9 +127,6 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: read
-            security-events: write
-            packages: read
-            actions: read
 
         steps:
             - uses: actions/checkout@v4
