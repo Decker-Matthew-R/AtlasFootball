@@ -3,15 +3,24 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, vi } from 'vitest';
 
+import { UserProvider } from '@/GlobalContext/UserContext/UserContext';
 import * as metricsClient from '@/metrics/client/MetricsClient';
 import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
 import { MetricEventType } from '@/metrics/model/MetricEventType';
 import { Navbar } from '@/Navbar/Navbar';
+import * as cookieUtils from '@/utils/CookieUtils';
 
 const mockNavigate = vi.fn();
 const currentRoute = '/';
 
+vi.mock('@/utils/CookieUtils');
+
 vi.mock('react-router-dom', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(null);
+  });
+
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
@@ -33,9 +42,11 @@ describe('Navbar', () => {
 
   const renderDesktopNavbar = () => {
     render(
-      <BrowserRouter>
-        <Navbar />;
-      </BrowserRouter>,
+      <UserProvider>
+        <BrowserRouter>
+          <Navbar />
+        </BrowserRouter>
+      </UserProvider>,
     );
   };
 
@@ -159,4 +170,94 @@ describe('Navbar', () => {
       expect(menuOption).not.toBeVisible();
     },
   );
+
+  it('should show profile picture when user has valid profilePicture URL', () => {
+    // Mock user with profile picture
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
+      id: 1,
+      email: 'test@example.com',
+      name: 'John Doe',
+      firstName: 'John',
+      lastName: 'Doe',
+      profilePicture: 'https://example.com/avatar.jpg',
+    });
+
+    renderDesktopNavbar();
+
+    const avatar = screen.getByRole('img');
+
+    expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg');
+    expect(avatar).toHaveAttribute('alt', 'J');
+  });
+
+  it('should show first letter of name when user has no profile picture', () => {
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
+      id: 1,
+      email: 'test@example.com',
+      name: 'Awatif Decker',
+      firstName: 'Awatif',
+      lastName: 'Decker',
+      profilePicture: '',
+    });
+
+    renderDesktopNavbar();
+
+    const avatar = screen.getByText('A');
+
+    expect(avatar).toHaveTextContent('A');
+
+    const profileButton = screen.getByRole('button', { name: 'Open Profile Settings' });
+    expect(profileButton).toBeInTheDocument();
+  });
+
+  it('should show first letter when user has null profile picture', () => {
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
+      id: 1,
+      email: 'test@example.com',
+      name: 'Jane Smith',
+      firstName: 'Jane',
+      lastName: 'Smith',
+      profilePicture: null,
+    });
+
+    renderDesktopNavbar();
+
+    const avatar = screen.getByText('J');
+
+    expect(avatar).toHaveTextContent('J');
+
+    const profileButton = screen.getByRole('button', { name: 'Open Profile Settings' });
+    expect(profileButton).toBeInTheDocument();
+  });
+
+  it('should show person icon when user has no name', () => {
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
+      id: 1,
+      email: 'test@example.com',
+      name: '',
+      firstName: '',
+      lastName: '',
+      profilePicture: '',
+    });
+
+    renderDesktopNavbar();
+
+    const personIcon = screen.getByTestId('PersonIcon');
+    expect(personIcon).toBeInTheDocument();
+
+    const profileButton = screen.getByRole('button', { name: 'Open Profile Settings' });
+    expect(profileButton).toBeInTheDocument();
+  });
+
+  it('should show person icon when user is not logged in', () => {
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(null);
+
+    renderDesktopNavbar();
+
+    const personIcon = screen.getByTestId('PersonIcon');
+    expect(personIcon).toBeInTheDocument();
+
+    const profileButton = screen.getByLabelText('Open Profile Settings');
+    expect(profileButton).toBeInTheDocument();
+  });
 });
