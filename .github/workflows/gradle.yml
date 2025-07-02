@@ -150,7 +150,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                language: [ 'java', 'javascript', 'actions' ]
+                language: [ 'java-kotlin', 'javascript-typescript', 'actions' ]
         steps:
             -   name: Checkout repository
                 uses: actions/checkout@v4
