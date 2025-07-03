@@ -331,6 +331,12 @@ describe('Navbar', () => {
 
     userEvent.click(menuLoginButton);
 
+    expect(mockSaveMetricEvent).toHaveBeenCalledTimes(1);
+    expect(mockSaveMetricEvent).toHaveBeenCalledWith(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+      screen: '/',
+      triggerId: 'Login',
+    });
+
     expect(mockLocation.href).toBe('http://localhost:8080/oauth2/authorization/google');
   });
 });

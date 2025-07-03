@@ -97,6 +97,10 @@ export const Navbar = () => {
   };
 
   const handleLogin = () => {
+    saveMetricEvent(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+      triggerId: 'Login',
+      screen: currentLocation.pathname,
+    });
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
