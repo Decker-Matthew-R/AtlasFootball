@@ -36,6 +36,7 @@ export default {
         'src/themes/*',
         'src/**/model/*',
         'src/ApiEndpoints/*',
+        '**/types/**',
       ],
       thresholds: {
         branches: 90,

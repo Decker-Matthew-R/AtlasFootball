@@ -15,6 +15,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { useUser } from '@/GlobalContext/UserContext/UserContext';
 import { saveMetricEvent } from '@/metrics/client/MetricsClient';
 import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
 import { MetricEventType } from '@/metrics/model/MetricEventType';
@@ -31,6 +32,8 @@ const settings = [
 export const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+
+  const { user } = useUser();
 
   const navigate = useNavigate();
   const currentLocation = useLocation();
@@ -189,9 +192,11 @@ export const Navbar = () => {
                 sx={{ p: 0 }}
               >
                 <Avatar
-                  alt='Remy Sharp'
-                  src='/static/images/avatar/2.jpg'
-                />
+                  alt={user?.name ? user?.name.charAt(0) : ''}
+                  src={user?.profilePicture || undefined}
+                >
+                  {!user?.profilePicture && (user?.name ? user?.name.charAt(0) : '')}
+                </Avatar>
               </IconButton>
             </Tooltip>
             <Menu
