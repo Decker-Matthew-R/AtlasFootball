@@ -143,7 +143,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         try {
             JSONObject eventMetadata = new JSONObject();
             eventMetadata.put("triggerId", "OAuth Success");
-            eventMetadata.put("screen", "N/A"); // 🎯 Changed from "/" to "N/A"
+            eventMetadata.put("screen", "N/A");
 
             MetricEventDTO loginMetric =
                     MetricEventDTO.builder()
@@ -157,7 +157,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         } catch (Exception e) {
             log.error("Failed to capture login metric for user: {}", user.getId(), e);
-            // Don't throw - metrics shouldn't break login flow
         }
     }
 }
