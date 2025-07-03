@@ -77,6 +77,10 @@ export const Navbar = () => {
     navigate(route);
   };
 
+  const handleLogin = () => {
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+  };
+
   return (
     <AppBar position='static'>
       <Container maxWidth={false}>
@@ -215,17 +219,26 @@ export const Navbar = () => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem
-                  key={setting.setting}
-                  onClick={() => {
-                    handleCloseUserMenu();
-                    handleMenuItemNavigation(setting.route, setting.setting);
-                  }}
+              {user ? (
+                settings.map((setting) => (
+                  <MenuItem
+                    key={setting.setting}
+                    onClick={() => {
+                      handleCloseUserMenu();
+                      handleMenuItemNavigation(setting.route, setting.setting);
+                    }}
+                  >
+                    <Typography sx={{ textAlign: 'center' }}>{setting.setting}</Typography>
+                  </MenuItem>
+                ))
+              ) : (
+                <Button
+                  onClick={handleLogin}
+                  sx={{ marginLeft: '.4rem', marginRight: '.4rem' }}
                 >
-                  <Typography sx={{ textAlign: 'center' }}>{setting.setting}</Typography>
-                </MenuItem>
-              ))}
+                  Login
+                </Button>
+              )}
             </Menu>
           </Box>
         </Toolbar>

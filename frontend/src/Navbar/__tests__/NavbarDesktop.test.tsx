@@ -15,6 +15,15 @@ const currentRoute = '/';
 
 vi.mock('@/utils/CookieUtils');
 
+const mockLocation = {
+  href: '',
+};
+
+Object.defineProperty(window, 'location', {
+  value: mockLocation,
+  writable: true,
+});
+
 vi.mock('react-router-dom', async () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,6 +47,7 @@ const mockMetricsClient = vi
 describe('Navbar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(null);
   });
 
   const renderDesktopNavbar = () => {
@@ -146,6 +156,15 @@ describe('Navbar', () => {
           screen: '/',
         },
       };
+
+      vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
+        id: 1,
+        email: 'test@example.com',
+        name: 'Jane Smith',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        profilePicture: null,
+      });
 
       renderDesktopNavbar();
 
@@ -259,5 +278,26 @@ describe('Navbar', () => {
 
     const profileButton = screen.getByLabelText('Open Profile Settings');
     expect(profileButton).toBeInTheDocument();
+  });
+
+  it('should display login button in the profile options menu when user is not logged on and should redirect to oauth endpoint on click', () => {
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(null);
+
+    renderDesktopNavbar();
+
+    const profileIconMobile = screen.getByLabelText('Open Profile Settings');
+    expect(profileIconMobile).toBeVisible();
+
+    userEvent.click(profileIconMobile);
+
+    const profileMenu = screen.getByRole('menu');
+    expect(profileMenu).toBeVisible();
+
+    const menuLoginButton = screen.getByRole('button', { name: 'Login' });
+    expect(menuLoginButton).toBeVisible();
+
+    userEvent.click(menuLoginButton);
+
+    expect(mockLocation.href).toBe('http://localhost:8080/oauth2/authorization/google');
   });
 });
