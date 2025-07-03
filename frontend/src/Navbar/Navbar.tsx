@@ -16,9 +16,8 @@ import Typography from '@mui/material/Typography';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useUser } from '@/GlobalContext/UserContext/UserContext';
-import { saveMetricEvent } from '@/metrics/client/MetricsClient';
+import { useMetrics } from '@/metrics/client/MetricsClient';
 import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
-import { MetricEventType } from '@/metrics/model/MetricEventType';
 
 interface SettingItem {
   setting: string;
@@ -30,6 +29,7 @@ export const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const { user, logout } = useUser();
+  const { saveMetricEvent } = useMetrics();
 
   const pages = [
     { page: 'News', route: '/' },
@@ -40,14 +40,10 @@ export const Navbar = () => {
     {
       setting: 'Logout',
       action: () => {
-        const metricEvent: MetricEventType = {
-          event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-          eventMetadata: {
-            triggerId: 'Logout',
-            screen: currentLocation.pathname,
-          },
-        };
-        saveMetricEvent(metricEvent);
+        saveMetricEvent(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+          triggerId: 'Logout',
+          screen: currentLocation.pathname,
+        });
 
         logout();
       },
@@ -73,26 +69,18 @@ export const Navbar = () => {
   };
 
   const handleBrandingClick = (brandingClicked: string) => {
-    const metricEvent: MetricEventType = {
-      event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-      eventMetadata: {
-        triggerId: brandingClicked,
-        screen: currentLocation.pathname,
-      },
-    };
-    saveMetricEvent(metricEvent);
+    saveMetricEvent(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+      triggerId: brandingClicked,
+      screen: currentLocation.pathname,
+    });
     navigate('/');
   };
 
   const handlePageItemClick = (route: string, buttonClicked: string) => {
-    const metricEvent: MetricEventType = {
-      event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-      eventMetadata: {
-        triggerId: buttonClicked,
-        screen: currentLocation.pathname,
-      },
-    };
-    saveMetricEvent(metricEvent);
+    saveMetricEvent(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+      triggerId: buttonClicked,
+      screen: currentLocation.pathname,
+    });
     navigate(route);
   };
 
@@ -100,14 +88,10 @@ export const Navbar = () => {
     if (item.action) {
       item.action();
     } else if (item.route) {
-      const metricEvent: MetricEventType = {
-        event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-        eventMetadata: {
-          triggerId: item.setting,
-          screen: currentLocation.pathname,
-        },
-      };
-      saveMetricEvent(metricEvent);
+      saveMetricEvent(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+        triggerId: item.setting,
+        screen: currentLocation.pathname,
+      });
       navigate(item.route);
     }
   };

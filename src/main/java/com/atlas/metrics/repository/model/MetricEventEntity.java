@@ -24,4 +24,7 @@ public class MetricEventEntity {
 
     @ColumnTransformer(write = "?::jsonb")
     String metadata;
+
+    @Column(nullable = true)
+    private Long userId;
 }

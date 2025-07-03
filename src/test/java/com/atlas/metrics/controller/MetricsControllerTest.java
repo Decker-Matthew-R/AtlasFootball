@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -102,5 +103,56 @@ class MetricsControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(mockMetricsService);
+    }
+
+    @Test
+    @DisplayName("Should save metric with userId when provided")
+    void shouldSaveMetricWithUserId() throws Exception {
+        String requestJson =
+                """
+        {
+            "event": "BUTTON_CLICK",
+            "eventMetadata": {"buttonId": "submit", "screen": "login"},
+            "userId": 123
+        }
+        """;
+
+        mockMvc.perform(
+                        post("/api/save-metric")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestJson)
+                                .with(csrf()))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<MetricEventDTO> captor = ArgumentCaptor.forClass(MetricEventDTO.class);
+        verify(mockMetricsService).saveMetricEvent(captor.capture());
+
+        MetricEventDTO captured = captor.getValue();
+        assertEquals(123L, captured.getUserId());
+    }
+
+    @Test
+    @DisplayName("Should save metric without userId when not provided")
+    void shouldSaveMetricWithoutUserId() throws Exception {
+        String requestJson =
+                """
+        {
+            "event": "BUTTON_CLICK",
+            "eventMetadata": {"buttonId": "submit", "screen": "login"}
+        }
+        """;
+
+        mockMvc.perform(
+                        post("/api/save-metric")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestJson)
+                                .with(csrf()))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<MetricEventDTO> captor = ArgumentCaptor.forClass(MetricEventDTO.class);
+        verify(mockMetricsService).saveMetricEvent(captor.capture());
+
+        MetricEventDTO captured = captor.getValue();
+        assertNull(captured.getUserId());
     }
 }

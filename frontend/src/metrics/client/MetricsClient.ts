@@ -1,11 +1,29 @@
 import { API_ENDPOINTS } from '@/ApiEndpoints/API_ENDPOINTS';
 import axiosInstance from '@/AxiosInstance/AxiosInstance';
+import { useUser } from '@/GlobalContext/UserContext/UserContext';
+import { MetadataType } from '@/metrics/model/MetadataType';
+import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
 import { MetricEventType } from '@/metrics/model/MetricEventType';
 
-export const saveMetricEvent = async (metricEvent: MetricEventType): Promise<void> => {
-  try {
-    await axiosInstance.post(API_ENDPOINTS.RECORD_METRIC_EVENT, metricEvent);
-  } catch {
-    throw new Error('Failed to capture metric event.');
-  }
+export const useMetrics = () => {
+  const { user } = useUser();
+
+  const saveMetricEvent = async (
+    event: METRIC_EVENT_TYPE,
+    eventMetadata: MetadataType,
+  ): Promise<void> => {
+    try {
+      const metricEvent: MetricEventType = {
+        event,
+        eventMetadata,
+        ...(user && { userId: user.id }),
+      };
+
+      await axiosInstance.post(API_ENDPOINTS.RECORD_METRIC_EVENT, metricEvent);
+    } catch {
+      throw new Error('Failed to capture metric event.');
+    }
+  };
+
+  return { saveMetricEvent };
 };
