@@ -271,7 +271,6 @@ describe('CookieUtils', () => {
     const userData = {
       id: 222,
       email: 'test@example.com',
-      // Missing name fields to test undefined handling
       profilePicture: 'https://example.com/pic.jpg',
     };
 

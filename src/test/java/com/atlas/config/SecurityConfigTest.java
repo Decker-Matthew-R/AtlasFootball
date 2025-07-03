@@ -86,15 +86,23 @@ class SecurityConfigWorkingTest {
     @Test
     void shouldRequireAuthenticationForUserEndpoints() throws Exception {
         mockMvc.perform(get("/api/user/profile"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
     }
 
     @Test
     void shouldRequireAuthenticationForAdminEndpoints() throws Exception {
         mockMvc.perform(get("/api/admin/users"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
     }
 
     @Test
@@ -185,11 +193,21 @@ class SecurityConfigWorkingTest {
                             });
         }
 
-        String[] protectedPaths = {
-            "/api/user/profile", "/api/admin/dashboard", "/secure/data", "/private/info"
-        };
+        String[] protectedApiPaths = {"/api/user/profile", "/api/admin/dashboard"};
 
-        for (String path : protectedPaths) {
+        for (String path : protectedApiPaths) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(
+                            result -> {
+                                String location = result.getResponse().getHeader("Location");
+                                assertThat(location).isNull();
+                            });
+        }
+
+        String[] protectedNonApiPaths = {"/secure/data", "/private/info"};
+
+        for (String path : protectedNonApiPaths) {
             mockMvc.perform(get(path))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(header().string("Location", containsString("oauth2/authorization")));
@@ -236,35 +254,45 @@ class SecurityConfigWorkingTest {
         when(jwtTokenProvider.validateToken(invalidJwtToken)).thenReturn(false);
 
         mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", invalidJwtToken)))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
     }
 
     @Test
     void shouldRejectExpiredJwtCookie() throws Exception {
-
         String expiredJwtToken = "expired.jwt.token";
         when(jwtTokenProvider.validateToken(expiredJwtToken)).thenReturn(false);
 
         mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", expiredJwtToken)))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
     }
 
     @Test
     void shouldRejectValidJwtWhenUserNotFoundInDatabase() throws Exception {
-
         String validJwtToken = "valid.jwt.token";
 
         when(jwtTokenProvider.validateToken(validJwtToken)).thenReturn(true);
         when(jwtTokenProvider.getUserIdFromToken(validJwtToken)).thenReturn(999L);
         when(jwtTokenProvider.getEmailFromToken(validJwtToken))
                 .thenReturn("nonexistent@example.com");
-        when(userService.findById(999L)).thenReturn(Optional.empty()); // User not found
+        when(userService.findById(999L)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", validJwtToken)))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
     }
 
     @Test
@@ -283,7 +311,6 @@ class SecurityConfigWorkingTest {
                                 int status = result.getResponse().getStatus();
                                 String location = result.getResponse().getHeader("Location");
 
-                                // Should not redirect to OAuth for public endpoints
                                 if (status == 302 && location != null) {
                                     assertThat(location)
                                             .as(
@@ -325,8 +352,12 @@ class SecurityConfigWorkingTest {
     @Test
     void shouldFallbackToOAuth2WhenNoJwtCookie() throws Exception {
         mockMvc.perform(get("/api/user/profile"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
     }
 
     @Test
@@ -338,8 +369,12 @@ class SecurityConfigWorkingTest {
                 .thenThrow(new RuntimeException("JWT parsing failed"));
 
         mockMvc.perform(get("/api/user/profile").cookie(new Cookie("jwt", malformedJwtToken)))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
     }
 
     @Test
@@ -378,6 +413,224 @@ class SecurityConfigWorkingTest {
                                 assertThat(status).isNotEqualTo(403);
                             });
         }
+    }
+
+    @Test
+    void shouldReturn401ForUnauthenticatedApiRequests() throws Exception {
+        String[] protectedApiPaths = {
+            "/api/user/profile", "/api/admin/users", "/api/logout", "/api/protected/resource"
+        };
+
+        for (String path : protectedApiPaths) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(
+                            result -> {
+                                String location = result.getResponse().getHeader("Location");
+                                assertThat(location)
+                                        .as("API endpoint %s should not redirect to OAuth2", path)
+                                        .isNull();
+                            });
+        }
+    }
+
+    @Test
+    void shouldReturn401ForUnauthenticatedApiPostRequests() throws Exception {
+        String[] protectedApiPaths = {"/api/user/update", "/api/admin/create", "/api/data/save"};
+
+        for (String path : protectedApiPaths) {
+            mockMvc.perform(post(path).contentType("application/json").content("{}").with(csrf()))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(
+                            result -> {
+                                String location = result.getResponse().getHeader("Location");
+                                assertThat(location)
+                                        .as("API endpoint %s should not redirect to OAuth2", path)
+                                        .isNull();
+                            });
+        }
+    }
+
+    @Test
+    void shouldReturn401ForUnauthenticatedApiPutRequests() throws Exception {
+        mockMvc.perform(
+                        put("/api/user/123")
+                                .contentType("application/json")
+                                .content("{}")
+                                .with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
+    }
+
+    @Test
+    void shouldReturn401ForUnauthenticatedApiDeleteRequests() throws Exception {
+        mockMvc.perform(delete("/api/user/123").with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
+    }
+
+    @Test
+    void shouldRedirectToOAuth2ForUnauthenticatedNonApiRequests() throws Exception {
+        String[] nonApiProtectedPaths = {
+            "/dashboard", "/profile", "/settings", "/protected/resource", "/admin/panel"
+        };
+
+        for (String path : nonApiProtectedPaths) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(header().string("Location", containsString("oauth2/authorization")));
+        }
+    }
+
+    @Test
+    void shouldReturn401ForApiLogoutWithoutAuthentication() throws Exception {
+        mockMvc.perform(post("/api/logout").with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
+    }
+
+    @Test
+    void shouldReturn401ForApiCsrfEndpointWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/api/csrf"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
+    }
+
+    @Test
+    void shouldStillAllowPublicApiEndpointsWithoutAuthentication() throws Exception {
+        String[] publicApiPaths = {"/api/public/test", "/api/save-metric"};
+
+        for (String path : publicApiPaths) {
+            mockMvc.perform(get(path))
+                    .andExpect(
+                            result -> {
+                                int status = result.getResponse().getStatus();
+                                String location = result.getResponse().getHeader("Location");
+
+                                assertThat(status).isNotEqualTo(401);
+                                if (location != null) {
+                                    assertThat(location).doesNotContain("oauth2/authorization");
+                                }
+                            });
+        }
+    }
+
+    @Test
+    void shouldReturn401ForDeepApiPaths() throws Exception {
+        String[] deepApiPaths = {
+            "/api/v1/users/123/profile",
+            "/api/v2/admin/dashboard/stats",
+            "/api/internal/metrics/performance"
+        };
+
+        for (String path : deepApiPaths) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(
+                            result -> {
+                                String location = result.getResponse().getHeader("Location");
+                                assertThat(location).isNull();
+                            });
+        }
+    }
+
+    @Test
+    void shouldReturn401ForApiPathsWithQueryParameters() throws Exception {
+        mockMvc.perform(get("/api/user/search").param("query", "test").param("limit", "10"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        result -> {
+                            String location = result.getResponse().getHeader("Location");
+                            assertThat(location).isNull();
+                        });
+    }
+
+    @Test
+    void shouldHandleApiPathsWithSpecialCharactersGracefully() throws Exception {
+        String[] specialApiPaths = {
+            "/api/user/test@example.com",
+            "/api/file/document%20name.pdf",
+            "/api/search/term+with+spaces"
+        };
+
+        for (String path : specialApiPaths) {
+            mockMvc.perform(get(path))
+                    .andExpect(
+                            result -> {
+                                int status = result.getResponse().getStatus();
+                                assertThat(status).isIn(400, 401);
+
+                                String location = result.getResponse().getHeader("Location");
+                                if (location != null) {
+                                    assertThat(location).doesNotContain("oauth2/authorization");
+                                }
+                            });
+        }
+    }
+
+    @Test
+    void shouldRespectExceptionHandlingForDifferentHttpMethods() throws Exception {
+        String apiPath = "/api/test/endpoint";
+
+        mockMvc.perform(get(apiPath)).andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post(apiPath).contentType("application/json").content("{}").with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(put(apiPath).contentType("application/json").content("{}").with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(delete(apiPath).with(csrf())).andExpect(status().isUnauthorized());
+
+        mockMvc.perform(patch(apiPath).contentType("application/json").content("{}").with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldHandleCaseInsensitiveApiPaths() throws Exception {
+        mockMvc.perform(get("/API/user/profile"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+
+        mockMvc.perform(get("/Api/user/profile"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+    }
+
+    @Test
+    void shouldReturn401OnlyForExactApiPathPrefix() throws Exception {
+        mockMvc.perform(get("/api/test")).andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/apix/test"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+
+        mockMvc.perform(get("/xapi/test"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("oauth2/authorization")));
+    }
+
+    @Test
+    void shouldReturn401ForMinimalApiPath() throws Exception {
+        mockMvc.perform(get("/api/")).andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api")).andExpect(status().isUnauthorized());
     }
 
     private UserEntity createTestUser() {

@@ -116,7 +116,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
             Cookie userCookie = new Cookie("user_info", encodedUserInfo);
             userCookie.setHttpOnly(false);
-            userCookie.setSecure(false); // Set to true in production with HTTPS
+            userCookie.setSecure(false);
             userCookie.setPath("/");
             userCookie.setDomain("localhost");
             userCookie.setMaxAge(24 * 60 * 60);

@@ -20,20 +20,39 @@ import { saveMetricEvent } from '@/metrics/client/MetricsClient';
 import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
 import { MetricEventType } from '@/metrics/model/MetricEventType';
 
-const pages = [
-  { page: 'News', route: '/' },
-  { page: 'Matches', route: '/' },
-];
-const settings = [
-  { setting: 'Profile', route: '/' },
-  { setting: 'Logout', route: '/' },
-];
+interface SettingItem {
+  setting: string;
+  route?: string;
+  action?: () => void;
+}
 
 export const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+  const { user, logout } = useUser();
 
-  const { user } = useUser();
+  const pages = [
+    { page: 'News', route: '/' },
+    { page: 'Matches', route: '/' },
+  ];
+  const settings: SettingItem[] = [
+    { setting: 'Profile', route: '/' },
+    {
+      setting: 'Logout',
+      action: () => {
+        const metricEvent: MetricEventType = {
+          event: METRIC_EVENT_TYPE.BUTTON_CLICK,
+          eventMetadata: {
+            triggerId: 'Logout',
+            screen: currentLocation.pathname,
+          },
+        };
+        saveMetricEvent(metricEvent);
+
+        logout();
+      },
+    },
+  ];
 
   const navigate = useNavigate();
   const currentLocation = useLocation();
@@ -65,7 +84,7 @@ export const Navbar = () => {
     navigate('/');
   };
 
-  const handleMenuItemNavigation = (route: string, buttonClicked: string) => {
+  const handlePageItemClick = (route: string, buttonClicked: string) => {
     const metricEvent: MetricEventType = {
       event: METRIC_EVENT_TYPE.BUTTON_CLICK,
       eventMetadata: {
@@ -75,6 +94,22 @@ export const Navbar = () => {
     };
     saveMetricEvent(metricEvent);
     navigate(route);
+  };
+
+  const handleMenuItemClick = (item: SettingItem) => {
+    if (item.action) {
+      item.action();
+    } else if (item.route) {
+      const metricEvent: MetricEventType = {
+        event: METRIC_EVENT_TYPE.BUTTON_CLICK,
+        eventMetadata: {
+          triggerId: item.setting,
+          screen: currentLocation.pathname,
+        },
+      };
+      saveMetricEvent(metricEvent);
+      navigate(item.route);
+    }
   };
 
   const handleLogin = () => {
@@ -142,7 +177,7 @@ export const Navbar = () => {
                   key={page.page}
                   onClick={() => {
                     handleCloseNavMenu();
-                    handleMenuItemNavigation(page.route, page.page);
+                    handlePageItemClick(page.route, page.page);
                   }}
                 >
                   <Typography sx={{ textAlign: 'center' }}>{page.page}</Typography>
@@ -181,7 +216,7 @@ export const Navbar = () => {
                 key={page.page}
                 onClick={() => {
                   handleCloseNavMenu();
-                  handleMenuItemNavigation(page.route, page.page);
+                  handlePageItemClick(page.route, page.page);
                 }}
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >
@@ -225,7 +260,7 @@ export const Navbar = () => {
                     key={setting.setting}
                     onClick={() => {
                       handleCloseUserMenu();
-                      handleMenuItemNavigation(setting.route, setting.setting);
+                      handleMenuItemClick(setting);
                     }}
                   >
                     <Typography sx={{ textAlign: 'center' }}>{setting.setting}</Typography>

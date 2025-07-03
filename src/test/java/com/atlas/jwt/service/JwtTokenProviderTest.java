@@ -280,7 +280,7 @@ class JwtTokenProviderTest {
 
         Field secretKeyField = JwtTokenProvider.class.getDeclaredField("secretKey");
         secretKeyField.setAccessible(true);
-        secretKeyField.set(spyProvider, null); // Set secretKey to null to cause exception
+        secretKeyField.set(spyProvider, null);
 
         assertThatThrownBy(() -> spyProvider.generateToken(testUser))
                 .isInstanceOf(JwtTokenGenerationException.class)
@@ -303,7 +303,6 @@ class JwtTokenProviderTest {
                 .doesNotThrowAnyException();
     }
 
-    // Test the validateToken catch blocks more reliably
     @Test
     void validateToken_shouldHandleJwtExceptionInCatchBlock() {
         String header = "eyJhbGciOiJIUzUxMiJ9";

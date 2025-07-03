@@ -23,7 +23,7 @@ describe('Metrics Client', () => {
       return res(ctx.status(201), ctx.json({}));
     });
 
-    server.use(rest.post(API_ENDPOINTS.RECORD_METRIC_EVENT, mockHandler));
+    server.use(rest.post(`http://localhost:8080${API_ENDPOINTS.RECORD_METRIC_EVENT}`, mockHandler));
 
     const result = saveMetricEvent(metricEventType);
 

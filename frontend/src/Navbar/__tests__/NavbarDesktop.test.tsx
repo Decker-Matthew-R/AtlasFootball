@@ -143,10 +143,7 @@ describe('Navbar', () => {
     },
   );
 
-  it.each([
-    ['Profile', '/'],
-    ['Logout', '/'],
-  ])(
+  it.each([['Profile', '/']])(
     'desktop: should display profile icon, %s menu item when profile icon is clicked, the user navigates to %s and hide menu when user clicks away ',
     async (menuItem, expectedRoute) => {
       const metricEvent: MetricEventType = {
@@ -190,8 +187,46 @@ describe('Navbar', () => {
     },
   );
 
+  it('desktop: should display Logout Button in profile menu items', () => {
+    const metricEvent: MetricEventType = {
+      event: METRIC_EVENT_TYPE.BUTTON_CLICK,
+      eventMetadata: {
+        triggerId: 'Logout',
+        screen: '/',
+      },
+    };
+
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
+      id: 1,
+      email: 'test@example.com',
+      name: 'Jane Smith',
+      firstName: 'Jane',
+      lastName: 'Smith',
+      profilePicture: null,
+    });
+
+    renderDesktopNavbar();
+
+    const profileIcon = screen.getByLabelText('Open Profile Settings');
+    expect(profileIcon).toBeVisible();
+
+    userEvent.click(profileIcon);
+
+    const profileMenu = screen.getByRole('menu');
+    expect(profileMenu).toBeVisible();
+
+    const menuOption = screen.getByRole('menuitem', { name: 'Logout' });
+    expect(menuOption).toBeVisible();
+
+    userEvent.click(menuOption);
+
+    expect(mockMetricsClient).toHaveBeenCalledTimes(1);
+    expect(mockMetricsClient).toHaveBeenCalledWith(metricEvent);
+
+    expect(menuOption).not.toBeVisible();
+  });
+
   it('should show profile picture when user has valid profilePicture URL', () => {
-    // Mock user with profile picture
     vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
       id: 1,
       email: 'test@example.com',

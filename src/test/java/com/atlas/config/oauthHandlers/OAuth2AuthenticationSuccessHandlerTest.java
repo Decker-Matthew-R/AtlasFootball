@@ -465,7 +465,6 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Test
     void determineRedirectUrl_shouldHandleFrontendUrlWithoutSlash() throws Exception {
-        // Test the specific branch where frontendUrl doesn't end with "/"
         handler =
                 new OAuth2AuthenticationSuccessHandler(
                         userService, jwtTokenProvider, "http://localhost:3000");
@@ -485,7 +484,6 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Test
     void determineRedirectUrl_shouldHandleFrontendUrlWithSlash() throws Exception {
-        // Test the specific branch where frontendUrl already ends with "/"
         handler =
                 new OAuth2AuthenticationSuccessHandler(
                         userService, jwtTokenProvider, "http://localhost:3000/");
@@ -512,7 +510,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
         when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
         when(userService.getFullName(mockUser)).thenReturn("John Doe");
         when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
-        when(request.getHeader("Referer")).thenReturn(null); // No referrer
+        when(request.getHeader("Referer")).thenReturn(null);
 
         handler.onAuthenticationSuccess(request, response, authentication);
 
@@ -530,7 +528,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
         when(userService.createOrUpdateUserFromOAuth(oAuth2User, "google")).thenReturn(mockUser);
         when(userService.getFullName(mockUser)).thenReturn("John Doe");
         when(jwtTokenProvider.generateToken(mockUser)).thenReturn(mockJwtToken);
-        when(request.getHeader("Referer")).thenReturn(null); // No referrer
+        when(request.getHeader("Referer")).thenReturn(null);
 
         handler.onAuthenticationSuccess(request, response, authentication);
 
