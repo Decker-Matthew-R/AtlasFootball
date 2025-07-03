@@ -94,7 +94,7 @@ describe('Landing Page', () => {
   it('should display login button when user is not authenticated', () => {
     renderApp();
 
-    const loginButton = screen.getByRole('button', { name: 'Login' });
+    const loginButton = screen.getByLabelText('login-button');
     expect(loginButton).toBeVisible();
   });
 

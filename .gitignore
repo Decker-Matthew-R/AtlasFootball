@@ -39,6 +39,12 @@ bin/
 
 postgres-data
 
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 ### Journey test output ###
 /journey/cypress/screenshots
 /journey/cypress/videos

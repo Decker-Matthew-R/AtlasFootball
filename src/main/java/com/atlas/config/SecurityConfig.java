@@ -45,7 +45,8 @@ public class SecurityConfig {
                                                 "/oauth2/**",
                                                 "/login/oauth2/code/**",
                                                 "/api/save-metric",
-                                                "/api/auth/**"))
+                                                "/api/auth/**",
+                                                "/api/test/**"))
                 .addFilterBefore(
                         jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(
@@ -65,6 +66,8 @@ public class SecurityConfig {
                                                 "/oauth2/**",
                                                 "/api/public/**",
                                                 "/api/save-metric")
+                                        .permitAll()
+                                        .requestMatchers("/api/test/**")
                                         .permitAll()
                                         .anyRequest()
                                         .authenticated()))
