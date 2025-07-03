@@ -2,6 +2,7 @@ import { createContext, ReactNode, useContext, useEffect, useReducer } from 'rea
 
 import PropTypes from 'prop-types';
 
+import { logUserOut } from '@/GlobalContext/UserContext/client/UserClient';
 import { User } from '@/GlobalContext/UserContext/types/user';
 import { deleteCookie, parseUserInfoCookie } from '@/utils/CookieUtils';
 
@@ -180,10 +181,17 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = (): void => {
+  const logout = async (): Promise<void> => {
     try {
-      deleteCookie('jwt');
+      console.log('Before logout - cookies:', document.cookie);
+
+      await logUserOut();
+
+      console.log('Backend logout successful');
+
       deleteCookie('user_info');
+
+      console.log('After logout - cookies:', document.cookie);
 
       dispatch({ type: USER_ACTIONS.LOGOUT });
 

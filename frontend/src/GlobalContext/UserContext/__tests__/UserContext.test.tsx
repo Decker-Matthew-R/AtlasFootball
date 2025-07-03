@@ -3,11 +3,14 @@ import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import * as userClient from '@/GlobalContext/UserContext/client/UserClient';
 import { User } from '@/GlobalContext/UserContext/types/user';
 import { UserProvider, useUser } from '@/GlobalContext/UserContext/UserContext';
 import * as cookieUtils from '@/utils/CookieUtils';
 
 vi.mock('@/utils/CookieUtils');
+
+vi.mock('@/GlobalContext/UserContext/client/UserClient');
 
 const mockLocation = {
   href: '',
@@ -70,6 +73,7 @@ describe('UserContext', () => {
     mockLocation.href = '';
 
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(userClient.logUserOut).mockResolvedValue();
   });
 
   afterEach(() => {
@@ -287,6 +291,7 @@ describe('UserContext', () => {
 
     vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(userData);
     vi.mocked(cookieUtils.deleteCookie).mockImplementation(() => {});
+    vi.mocked(userClient.logUserOut).mockResolvedValue();
 
     renderWithProvider();
 
@@ -294,18 +299,21 @@ describe('UserContext', () => {
       expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
     });
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('logout-btn').click();
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(cookieUtils.deleteCookie).toHaveBeenCalledWith('jwt');
+    expect(userClient.logUserOut).toHaveBeenCalledTimes(1);
     expect(cookieUtils.deleteCookie).toHaveBeenCalledWith('user_info');
+    expect(cookieUtils.deleteCookie).not.toHaveBeenCalledWith('jwt');
     expect(screen.getByTestId('is-authenticated')).toHaveTextContent('false');
     expect(screen.getByTestId('user-data')).toHaveTextContent('null');
     expect(mockLocation.href).toBe('/');
   });
 
-  it('should handle logout error', async () => {
+  it('should handle logout error from backend API', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const userData: User = {
       id: 123,
@@ -317,6 +325,41 @@ describe('UserContext', () => {
     };
 
     vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(userData);
+    vi.mocked(cookieUtils.deleteCookie).mockImplementation(() => {});
+    vi.mocked(userClient.logUserOut).mockRejectedValue(new Error('Backend logout failed'));
+
+    renderWithProvider();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
+    });
+
+    await act(async () => {
+      screen.getByTestId('logout-btn').click();
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(userClient.logUserOut).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('error')).toHaveTextContent('Logout failed');
+    expect(consoleSpy).toHaveBeenCalledWith('Logout error:', expect.any(Error));
+
+    expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
+  });
+
+  it('should handle cookie deletion error during logout', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const userData: User = {
+      id: 123,
+      name: 'Test User',
+      email: 'test@example.com',
+      firstName: 'Test',
+      lastName: 'User',
+      profilePicture: null,
+    };
+
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(userData);
+    vi.mocked(userClient.logUserOut).mockResolvedValue();
     vi.mocked(cookieUtils.deleteCookie).mockImplementation(() => {
       throw new Error('Delete cookie failed');
     });
@@ -327,10 +370,12 @@ describe('UserContext', () => {
       expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
     });
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('logout-btn').click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
+    expect(userClient.logUserOut).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('error')).toHaveTextContent('Logout failed');
     expect(consoleSpy).toHaveBeenCalledWith('Logout error:', expect.any(Error));
   });

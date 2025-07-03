@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -70,7 +71,19 @@ public class SecurityConfig {
                 .oauth2Login(
                         oauth2 ->
                                 oauth2.successHandler(oAuth2AuthenticationSuccessHandler)
-                                        .failureHandler(oAuth2AuthenticationFailureHandler));
+                                        .failureHandler(oAuth2AuthenticationFailureHandler))
+                .exceptionHandling(
+                        exceptions ->
+                                exceptions.authenticationEntryPoint(
+                                        (request, response, authException) -> {
+                                            if (request.getRequestURI().startsWith("/api/")
+                                                    || request.getRequestURI().equals("/api")) {
+                                                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                                            } else {
+                                                response.sendRedirect(
+                                                        "/oauth2/authorization/google");
+                                            }
+                                        }));
         return http.build();
     }
 
