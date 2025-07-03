@@ -586,7 +586,7 @@ class SecurityConfigWorkingTest {
 
     @Test
     void shouldRespectExceptionHandlingForDifferentHttpMethods() throws Exception {
-        String apiPath = "/api/test/endpoint";
+        String apiPath = "/api/testshould401/endpoint";
 
         mockMvc.perform(get(apiPath)).andExpect(status().isUnauthorized());
 
@@ -615,7 +615,7 @@ class SecurityConfigWorkingTest {
 
     @Test
     void shouldReturn401OnlyForExactApiPathPrefix() throws Exception {
-        mockMvc.perform(get("/api/test")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/should401")).andExpect(status().isUnauthorized());
 
         mockMvc.perform(get("/apix/test"))
                 .andExpect(status().is3xxRedirection())

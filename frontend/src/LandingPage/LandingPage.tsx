@@ -36,6 +36,7 @@ function LandingPage() {
         <></>
       ) : (
         <Button
+          aria-label='login-button'
           variant='contained'
           onClick={handleLogin}
           sx={{

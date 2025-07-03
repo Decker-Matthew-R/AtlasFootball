@@ -157,7 +157,8 @@ jacocoTestReport {
                 '**/*Configuration.class',
                 '**/dto/**',
                 '**/entity/**',
-                '**/**/model/**'
+                '**/**/model/**',
+                '**/TestAuthController.class'
             ])
         }))
     }
@@ -192,7 +193,8 @@ jacocoTestCoverageVerification {
                 '**/*Configuration.class',
                 '**/dto/**',
                 '**/entity/**',
-                '**/**/model/**'
+                '**/**/model/**',
+                '**/TestAuthController.class'
             ])
         }))
     }

@@ -10,4 +10,5 @@ export default defineConfig({
     baseUrl: "http://localhost:8080",
     supportFile: "cypress/support/e2e.ts"
   },
+
 });
