@@ -12,4 +12,5 @@ import net.minidev.json.JSONObject;
 public class MetricEventDTO {
     MetricEventType event;
     JSONObject eventMetadata;
+    Long userId;
 }

@@ -26,6 +26,7 @@ public class MetricsService {
                 .event(metricEventDTO.getEvent().name())
                 .eventTime(Timestamp.from(Instant.now()))
                 .metadata(metricEventDTO.getEventMetadata().toString())
+                .userId(metricEventDTO.getUserId())
                 .build();
     }
 }

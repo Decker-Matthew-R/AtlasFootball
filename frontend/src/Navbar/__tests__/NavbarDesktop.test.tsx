@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, it, vi } from 'vitest';
+import { describe, it, vi, beforeEach } from 'vitest';
 
 import { UserProvider } from '@/GlobalContext/UserContext/UserContext';
 import * as metricsClient from '@/metrics/client/MetricsClient';
 import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
-import { MetricEventType } from '@/metrics/model/MetricEventType';
 import { Navbar } from '@/Navbar/Navbar';
 import * as cookieUtils from '@/utils/CookieUtils';
 
@@ -25,11 +24,6 @@ Object.defineProperty(window, 'location', {
 });
 
 vi.mock('react-router-dom', async () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(null);
-  });
-
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
@@ -40,15 +34,14 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const mockMetricsClient = vi
-  .spyOn(metricsClient, 'saveMetricEvent')
-  .mockImplementation(() => Promise.resolve());
+vi.mock('@/metrics/client/MetricsClient', () => ({
+  useMetrics: vi.fn(() => ({
+    saveMetricEvent: vi.fn(),
+  })),
+}));
 
 describe('Navbar', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(null);
-  });
+  const mockSaveMetricEvent = vi.fn();
 
   const renderDesktopNavbar = () => {
     render(
@@ -59,6 +52,14 @@ describe('Navbar', () => {
       </UserProvider>,
     );
   };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(null);
+    vi.mocked(metricsClient.useMetrics).mockReturnValue({
+      saveMetricEvent: mockSaveMetricEvent,
+    });
+  });
 
   it('desktop: should contain a site logo and company name', () => {
     renderDesktopNavbar();
@@ -71,44 +72,34 @@ describe('Navbar', () => {
   });
 
   it('desktop: should navigate to home if Atlas text is clicked and record a metric', async () => {
-    const metricEvent: MetricEventType = {
-      event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-      eventMetadata: {
-        triggerId: 'Atlas Name',
-        screen: '/',
-      },
-    };
-
     renderDesktopNavbar();
 
     const siteName = screen.getByLabelText('atlas-site-name');
 
     userEvent.click(siteName);
 
-    expect(mockMetricsClient).toHaveBeenCalledTimes(1);
-    expect(mockMetricsClient).toHaveBeenCalledWith(metricEvent);
+    expect(mockSaveMetricEvent).toHaveBeenCalledTimes(1);
+    expect(mockSaveMetricEvent).toHaveBeenCalledWith(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+      triggerId: 'Atlas Name',
+      screen: '/',
+    });
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
     expect(mockNavigate).toHaveBeenCalledTimes(1);
   });
 
   it('desktop: should navigate to home if Atlas Logo is clicked and record a metric', async () => {
-    const metricEvent: MetricEventType = {
-      event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-      eventMetadata: {
-        triggerId: 'Atlas Logo',
-        screen: '/',
-      },
-    };
-
     renderDesktopNavbar();
 
     const siteLogo = screen.getByLabelText('atlas-logo');
 
     userEvent.click(siteLogo);
 
-    expect(mockMetricsClient).toHaveBeenCalledTimes(1);
-    expect(mockMetricsClient).toHaveBeenCalledWith(metricEvent);
+    expect(mockSaveMetricEvent).toHaveBeenCalledTimes(1);
+    expect(mockSaveMetricEvent).toHaveBeenCalledWith(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+      triggerId: 'Atlas Logo',
+      screen: '/',
+    });
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
     expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -120,14 +111,6 @@ describe('Navbar', () => {
   ])(
     'desktop: should contain %s navigation buttons, navigate to %s, and record a metric when clicked',
     async (navigationButton, expectedRoute) => {
-      const metricEvent: MetricEventType = {
-        event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-        eventMetadata: {
-          triggerId: navigationButton,
-          screen: '/',
-        },
-      };
-
       renderDesktopNavbar();
 
       const navigationLink = screen.getByRole('button', { name: navigationButton });
@@ -135,8 +118,11 @@ describe('Navbar', () => {
 
       userEvent.click(navigationLink);
 
-      expect(mockMetricsClient).toHaveBeenCalledTimes(1);
-      expect(mockMetricsClient).toHaveBeenCalledWith(metricEvent);
+      expect(mockSaveMetricEvent).toHaveBeenCalledTimes(1);
+      expect(mockSaveMetricEvent).toHaveBeenCalledWith(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+        triggerId: navigationButton,
+        screen: '/',
+      });
 
       expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
       expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -144,16 +130,8 @@ describe('Navbar', () => {
   );
 
   it.each([['Profile', '/']])(
-    'desktop: should display profile icon, %s menu item when profile icon is clicked, the user navigates to %s and hide menu when user clicks away ',
+    'desktop: should display profile icon, %s menu item when profile icon is clicked, the user navigates to %s and hide menu when user clicks away',
     async (menuItem, expectedRoute) => {
-      const metricEvent: MetricEventType = {
-        event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-        eventMetadata: {
-          triggerId: menuItem,
-          screen: '/',
-        },
-      };
-
       vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
         id: 1,
         email: 'test@example.com',
@@ -178,8 +156,11 @@ describe('Navbar', () => {
 
       userEvent.click(menuOption);
 
-      expect(mockMetricsClient).toHaveBeenCalledTimes(1);
-      expect(mockMetricsClient).toHaveBeenCalledWith(metricEvent);
+      expect(mockSaveMetricEvent).toHaveBeenCalledTimes(1);
+      expect(mockSaveMetricEvent).toHaveBeenCalledWith(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+        triggerId: menuItem,
+        screen: '/',
+      });
 
       expect(mockNavigate).toHaveBeenCalledWith(expectedRoute);
       expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -188,14 +169,6 @@ describe('Navbar', () => {
   );
 
   it('desktop: should display Logout Button in profile menu items', () => {
-    const metricEvent: MetricEventType = {
-      event: METRIC_EVENT_TYPE.BUTTON_CLICK,
-      eventMetadata: {
-        triggerId: 'Logout',
-        screen: '/',
-      },
-    };
-
     vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
       id: 1,
       email: 'test@example.com',
@@ -220,8 +193,11 @@ describe('Navbar', () => {
 
     userEvent.click(menuOption);
 
-    expect(mockMetricsClient).toHaveBeenCalledTimes(1);
-    expect(mockMetricsClient).toHaveBeenCalledWith(metricEvent);
+    expect(mockSaveMetricEvent).toHaveBeenCalledTimes(1);
+    expect(mockSaveMetricEvent).toHaveBeenCalledWith(METRIC_EVENT_TYPE.BUTTON_CLICK, {
+      triggerId: 'Logout',
+      screen: '/',
+    });
 
     expect(menuOption).not.toBeVisible();
   });
