@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.atlas.config.jwt.JwtExceptions.JwtTokenGenerationException;
 import com.atlas.config.jwt.JwtTokenProvider;
+import com.atlas.metrics.service.MetricsService;
 import com.atlas.user.repository.model.UserEntity;
 import com.atlas.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +43,8 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Mock private OAuth2User oAuth2User;
 
+    @Mock private MetricsService metricsService;
+
     private UserEntity mockUser;
     private Map<String, Object> oauthAttributes;
     private String mockJwtToken;
@@ -71,7 +74,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
             throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -120,7 +123,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
     @Test
     void onAuthenticationSuccess_shouldUseReferrerForRedirectWhenNoConfiguredUrl()
             throws Exception {
-        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, "");
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, metricsService, jwtTokenProvider, "");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -138,7 +143,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Test
     void onAuthenticationSuccess_shouldUsePort3000FromReferrer() throws Exception {
-        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, null);
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, metricsService, jwtTokenProvider, null);
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -156,7 +163,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Test
     void onAuthenticationSuccess_shouldUseDefaultWhenNoReferrer() throws Exception {
-        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, "   ");
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, metricsService, jwtTokenProvider, "   ");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -176,7 +185,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void onAuthenticationSuccess_shouldAddSlashToConfiguredUrlWithoutSlash() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -195,7 +204,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void onAuthenticationSuccess_shouldNotAddSlashToConfiguredUrlWithSlash() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000/");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000/");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -221,7 +230,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -255,7 +264,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void onAuthenticationSuccess_shouldPropagateJwtGenerationException() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -277,7 +286,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void onAuthenticationSuccess_shouldPropagateUserServiceException() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -298,7 +307,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void onAuthenticationSuccess_shouldHandleIOExceptionDuringRedirect() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -320,7 +329,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void onAuthenticationSuccess_shouldUseCorrectProviderName() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -337,7 +346,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void onAuthenticationSuccess_shouldLogUserAttributesAndProcessing() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -354,7 +363,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Test
     void onAuthenticationSuccess_shouldHandleReferrerWithoutPortInfo() throws Exception {
-        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, "");
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, metricsService, jwtTokenProvider, "");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -380,7 +391,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -414,7 +425,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -441,7 +452,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -467,7 +478,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void determineRedirectUrl_shouldHandleFrontendUrlWithoutSlash() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -486,7 +497,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
     void determineRedirectUrl_shouldHandleFrontendUrlWithSlash() throws Exception {
         handler =
                 new OAuth2AuthenticationSuccessHandler(
-                        userService, jwtTokenProvider, "http://localhost:3000/");
+                        userService, metricsService, jwtTokenProvider, "http://localhost:3000/");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -503,7 +514,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Test
     void determineRedirectUrl_shouldHandleEmptyFrontendUrl() throws Exception {
-        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, "");
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, metricsService, jwtTokenProvider, "");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);
@@ -521,7 +534,9 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Test
     void determineRedirectUrl_shouldHandleWhitespaceOnlyFrontendUrl() throws Exception {
-        handler = new OAuth2AuthenticationSuccessHandler(userService, jwtTokenProvider, "   ");
+        handler =
+                new OAuth2AuthenticationSuccessHandler(
+                        userService, metricsService, jwtTokenProvider, "   ");
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(oauthAttributes);

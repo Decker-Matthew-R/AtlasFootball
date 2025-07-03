@@ -1,6 +1,9 @@
 package com.atlas.config.oauthHandlers;
 
 import com.atlas.config.jwt.JwtTokenProvider;
+import com.atlas.metrics.controller.model.MetricEventDTO;
+import com.atlas.metrics.controller.model.MetricEventType;
+import com.atlas.metrics.service.MetricsService;
 import com.atlas.user.repository.model.UserEntity;
 import com.atlas.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -24,14 +28,17 @@ import org.springframework.stereotype.Component;
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserService userService;
+    private final MetricsService metricsService;
     private final JwtTokenProvider jwtTokenProvider;
     private final String frontendUrl;
 
     public OAuth2AuthenticationSuccessHandler(
             UserService userService,
+            MetricsService metricsService,
             JwtTokenProvider jwtTokenProvider,
             @Value("${app.frontend.url:}") String frontendUrl) {
         this.userService = userService;
+        this.metricsService = metricsService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.frontendUrl = frontendUrl;
     }
@@ -56,6 +63,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                 user.getEmail(),
                 userService.getFullName(user),
                 jwtToken != null);
+
+        captureLoginMetric(user);
 
         setJwtCookie(response, jwtToken);
 
@@ -127,6 +136,28 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         } catch (Exception e) {
             log.error("Failed to set enhanced user info cookie for user: id={}", user.getId(), e);
+        }
+    }
+
+    private void captureLoginMetric(UserEntity user) {
+        try {
+            JSONObject eventMetadata = new JSONObject();
+            eventMetadata.put("triggerId", "OAuth Success");
+            eventMetadata.put("screen", "N/A"); // 🎯 Changed from "/" to "N/A"
+
+            MetricEventDTO loginMetric =
+                    MetricEventDTO.builder()
+                            .event(MetricEventType.LOGIN)
+                            .eventMetadata(eventMetadata)
+                            .userId(user.getId())
+                            .build();
+
+            metricsService.saveMetricEvent(loginMetric);
+            log.info("Login success metric captured for user: {}", user.getId());
+
+        } catch (Exception e) {
+            log.error("Failed to capture login metric for user: {}", user.getId(), e);
+            // Don't throw - metrics shouldn't break login flow
         }
     }
 }
