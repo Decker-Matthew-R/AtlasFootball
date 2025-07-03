@@ -1,18 +1,28 @@
 package com.atlas.user.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.atlas.config.jwt.JwtTokenProvider;
+import com.atlas.metrics.controller.model.MetricEventDTO;
+import com.atlas.metrics.controller.model.MetricEventType;
+import com.atlas.metrics.service.MetricsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -22,8 +32,16 @@ import org.springframework.test.web.servlet.MvcResult;
 class UserControllerTest {
 
     @Autowired private MockMvc mockMvc;
-
     @Autowired private ObjectMapper objectMapper;
+
+    @MockitoBean private MetricsService metricsService;
+    @MockitoBean private JwtTokenProvider jwtTokenProvider;
+
+    @BeforeEach
+    void setUp() {
+        when(jwtTokenProvider.getUserIdFromToken(anyString())).thenReturn(123L);
+        doNothing().when(metricsService).saveMetricEvent(any(MetricEventDTO.class));
+    }
 
     @Test
     void logout_shouldReturnSuccessMessageAndClearJwtCookie() throws Exception {
@@ -173,5 +191,40 @@ class UserControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("Logged out successfully"));
         }
+    }
+
+    @Test
+    void logout_shouldCaptureLogoutMetricWithCorrectData() throws Exception {
+        Cookie jwtCookie = new Cookie("jwt", "valid-jwt-token");
+
+        mockMvc.perform(post("/api/logout").cookie(jwtCookie)).andExpect(status().isOk());
+
+        ArgumentCaptor<MetricEventDTO> captor = ArgumentCaptor.forClass(MetricEventDTO.class);
+        verify(metricsService).saveMetricEvent(captor.capture());
+
+        MetricEventDTO captured = captor.getValue();
+        assertThat(captured.getEvent()).isEqualTo(MetricEventType.LOGOUT);
+        assertThat(captured.getUserId()).isEqualTo(123L);
+        assertThat(captured.getEventMetadata().get("triggerId")).isEqualTo("Logout Success");
+        assertThat(captured.getEventMetadata().get("screen")).isEqualTo("N/A");
+    }
+
+    @Test
+    void logout_shouldHandleMetricCaptureFailureGracefully() throws Exception {
+        doThrow(new RuntimeException("Metrics service failed"))
+                .when(metricsService)
+                .saveMetricEvent(any(MetricEventDTO.class));
+
+        mockMvc.perform(post("/api/logout")).andExpect(status().isOk());
+    }
+
+    @Test
+    void logout_shouldHandleInvalidJwtTokenGracefully() throws Exception {
+        when(jwtTokenProvider.getUserIdFromToken(anyString()))
+                .thenThrow(new RuntimeException("Invalid JWT"));
+
+        Cookie invalidJwtCookie = new Cookie("jwt", "invalid-token");
+
+        mockMvc.perform(post("/api/logout").cookie(invalidJwtCookie)).andExpect(status().isOk());
     }
 }
