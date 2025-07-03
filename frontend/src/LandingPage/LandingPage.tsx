@@ -2,8 +2,11 @@ import { Box } from '@mui/material';
 import Button from '@mui/material/Button';
 
 import backgroundImage from '@/assets/landingPageGenericBackground.jpg';
+import { useUser } from '@/GlobalContext/UserContext/UserContext';
 
 function LandingPage() {
+  const { user } = useUser();
+
   const handleLogin = () => {
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
@@ -20,18 +23,22 @@ function LandingPage() {
       }}
       data-testid='landing-page-container'
     >
-      <Button
-        variant='contained'
-        onClick={handleLogin}
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-        }}
-      >
-        Login
-      </Button>
+      {user ? (
+        <></>
+      ) : (
+        <Button
+          variant='contained'
+          onClick={handleLogin}
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          Login
+        </Button>
+      )}
     </Box>
   );
 }

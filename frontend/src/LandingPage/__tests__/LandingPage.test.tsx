@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, vi } from 'vitest';
 
+import { UserProvider } from '@/GlobalContext/UserContext/UserContext';
 import LandingPage from '@/LandingPage/LandingPage';
+import * as cookieUtils from '@/utils/CookieUtils';
+
+vi.mock('@/utils/CookieUtils');
 
 const mockLocation = {
   href: '',
@@ -15,12 +19,17 @@ Object.defineProperty(window, 'location', {
 
 describe('Landing Page', () => {
   beforeEach(() => {
-    // Reset location href before each test
     mockLocation.href = '';
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue(null);
     vi.clearAllMocks();
   });
 
-  const renderApp = () => render(<LandingPage />);
+  const renderApp = () =>
+    render(
+      <UserProvider>
+        <LandingPage />
+      </UserProvider>,
+    );
 
   it('Should contain a background image', async () => {
     renderApp();
@@ -50,5 +59,20 @@ describe('Landing Page', () => {
 
     const loginButton = screen.getByRole('button', { name: 'Login' });
     expect(loginButton).toBeVisible();
+  });
+
+  it('should NOT display login button when user is authenticated', () => {
+    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
+      id: 1,
+      email: 'test@example.com',
+      name: 'Awatif Decker',
+      firstName: 'Awatif',
+      lastName: 'Decker',
+      profilePicture: '',
+    });
+
+    renderApp();
+
+    expect(screen.queryByRole('button', { name: 'Login' })).not.toBeInTheDocument();
   });
 });
