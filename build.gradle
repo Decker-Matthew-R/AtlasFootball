@@ -172,14 +172,14 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.90  // 90% coverage required
+                minimum = 0.90
             }
         }
         rule {
             limit {
                 counter = 'BRANCH'
                 value = 'COVEREDRATIO'
-                minimum = 0.90  // 90% branch coverage required
+                minimum = 0.90
             }
         }
     }
@@ -187,7 +187,6 @@ jacocoTestCoverageVerification {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
-                // Same exclusions as jacocoTestReport
                 '**/Application.class',
                 '**/*Config.class',
                 '**/*Configuration.class',

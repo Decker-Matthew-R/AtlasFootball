@@ -1,4 +1,3 @@
-// Create this file: src/main/java/com/atlas/controller/TestAuthController.java
 package com.atlas.testUtils.controller;
 
 import com.atlas.config.jwt.JwtTokenProvider;
@@ -102,7 +101,6 @@ public class TestAuthController {
             if (existingUserOpt.isPresent()) {
                 UserEntity existingUser = existingUserOpt.get();
                 log.info("Found existing test user: {}", email);
-                // Update last login
                 existingUser.updateLastLogin();
                 return userRepository.save(existingUser);
             }
