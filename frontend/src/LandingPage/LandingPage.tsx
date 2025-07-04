@@ -28,7 +28,7 @@ function LandingPage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         width: '100vw',
-        height: '100vh',
+        height: { xs: 'calc(100vh - 112px)', sm: 'calc(100vh - 128px)', md: 'calc(100vh - 153px)' },
       }}
       data-testid='landing-page-container'
     >
