@@ -9,7 +9,6 @@ declare global {
   }
 }
 
-// Add the command implementation
 Cypress.Commands.add('loginViaBackend', (options = {}) => {
   const { email = 'test-user@example.com', name = 'Test User' } = options
 
