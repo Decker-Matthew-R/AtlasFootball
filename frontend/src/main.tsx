@@ -4,6 +4,7 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
+import { Footer } from '@/footer/Footer';
 import { UserProvider } from '@/GlobalContext/UserContext/UserContext';
 import { Navbar } from '@/Navbar/Navbar';
 import ApplicationRoutes from '@/Routes/ApplicationRoutes';
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <BrowserRouter>
           <Navbar />
           <ApplicationRoutes />
+          <Footer />
         </BrowserRouter>
       </UserProvider>
     </ThemeProvider>
