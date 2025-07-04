@@ -36,18 +36,10 @@ public class TestAuthController {
             HttpServletResponse response) {
 
         try {
-            log.info("=== Test Login Request ===");
 
             UserEntity testUser = createOrFindTestUser(request);
 
             String jwtToken = jwtTokenProvider.generateToken(testUser);
-
-            log.info(
-                    "Test user processed: id={}, email={}, name={}, tokenGenerated={}",
-                    testUser.getId(),
-                    testUser.getEmail(),
-                    userService.getFullName(testUser),
-                    jwtToken != null);
 
             setJwtCookie(response, jwtToken);
 
@@ -60,7 +52,6 @@ public class TestAuthController {
             return ResponseEntity.ok(responseBody);
 
         } catch (Exception e) {
-            log.error("Test login failed", e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Test login failed: " + e.getMessage());
             return ResponseEntity.status(500).body(errorResponse);
@@ -69,7 +60,6 @@ public class TestAuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> testLogout(HttpServletResponse response) {
-        log.info("=== Test Logout Request ===");
 
         Cookie jwtCookie = new Cookie("jwt", null);
         jwtCookie.setHttpOnly(true);
@@ -100,7 +90,6 @@ public class TestAuthController {
             Optional<UserEntity> existingUserOpt = userRepository.findByEmail(email);
             if (existingUserOpt.isPresent()) {
                 UserEntity existingUser = existingUserOpt.get();
-                log.info("Found existing test user: {}", email);
                 existingUser.updateLastLogin();
                 return userRepository.save(existingUser);
             }
@@ -122,10 +111,6 @@ public class TestAuthController {
             testUser.updateLastLogin();
             testUser = userRepository.save(testUser);
 
-            log.info(
-                    "Created new test user: id={}, email={}",
-                    testUser.getId(),
-                    testUser.getEmail());
         } catch (Exception e) {
             log.error("Failed to save test user", e);
             throw new RuntimeException("Failed to create test user", e);
@@ -142,8 +127,6 @@ public class TestAuthController {
         jwtCookie.setDomain("localhost");
         jwtCookie.setMaxAge(24 * 60 * 60);
         response.addCookie(jwtCookie);
-
-        log.info("JWT token set as HTTP-only cookie for localhost domain");
     }
 
     private void setUserInfoCookie(HttpServletResponse response, UserEntity user) {
@@ -172,9 +155,6 @@ public class TestAuthController {
             userCookie.setDomain("localhost");
             userCookie.setMaxAge(24 * 60 * 60);
             response.addCookie(userCookie);
-
-            log.info(
-                    "Enhanced user info cookie set with navbar data for user: id={}", user.getId());
 
         } catch (Exception e) {
             log.error("Failed to set enhanced user info cookie for user: id={}", user.getId(), e);

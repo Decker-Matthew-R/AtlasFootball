@@ -42,8 +42,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long userId = jwtTokenProvider.getUserIdFromToken(jwtToken);
                 String email = jwtTokenProvider.getEmailFromToken(jwtToken);
 
-                log.debug("Valid JWT found for user: id={}, email={}", userId, email);
-
                 Optional<UserEntity> userOptional = userService.findById(userId);
 
                 if (userOptional.isPresent()) {
@@ -53,15 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    log.debug(
-                            "Authentication set for user: id={}, email={}",
-                            user.getId(),
-                            user.getEmail());
                 } else {
                     log.warn("JWT valid but user not found in database: userId={}", userId);
                 }
-            } else {
-                log.debug("No valid JWT token found in request");
             }
         } catch (Exception e) {
             log.error("JWT authentication failed: {}", e.getMessage());
@@ -71,7 +63,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /** Extract JWT token from HTTP-only cookie */
     private String extractJwtFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) {
             return null;
@@ -79,17 +70,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         for (Cookie cookie : request.getCookies()) {
             if ("jwt".equals(cookie.getName())) {
-                String token = cookie.getValue();
-                log.debug("JWT token found in cookie");
-                return token;
+                return cookie.getValue();
             }
         }
 
-        log.debug("No JWT cookie found in request");
         return null;
     }
 
-    /** Create Spring Security Authentication object from user entity */
     private Authentication createAuthentication(UserEntity user, HttpServletRequest request) {
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
@@ -102,7 +89,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return authentication;
     }
 
-    /** Skip JWT validation for public endpoints */
     @Override
     public boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();

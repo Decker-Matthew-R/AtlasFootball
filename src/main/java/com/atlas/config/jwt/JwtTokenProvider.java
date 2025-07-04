@@ -30,8 +30,6 @@ public class JwtTokenProvider {
         this.jwtSecret = jwtSecret;
         this.jwtExpirationInMs = jwtExpirationInMs;
         this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-
-        log.info("JwtTokenProvider initialized with expiration: {} ms", jwtExpirationInMs);
     }
 
     public String generateToken(UserEntity user) {
@@ -45,35 +43,22 @@ public class JwtTokenProvider {
         Map<String, Object> claims = buildClaims(user);
 
         try {
-            String token =
-                    Jwts.builder()
-                            .setClaims(claims)
-                            .setSubject(user.getId().toString())
-                            .setIssuedAt(now)
-                            .setExpiration(expiryDate)
-                            .signWith(secretKey, SignatureAlgorithm.HS512)
-                            .compact();
 
-            log.info(
-                    "Generated JWT token for user: id={}, email={}, expires={}",
-                    user.getId(),
-                    user.getEmail(),
-                    expiryDate);
-
-            return token;
+            return Jwts.builder()
+                    .setClaims(claims)
+                    .setSubject(user.getId().toString())
+                    .setIssuedAt(now)
+                    .setExpiration(expiryDate)
+                    .signWith(secretKey, SignatureAlgorithm.HS512)
+                    .compact();
         } catch (Exception e) {
-            log.error(
-                    "Failed to generate JWT token for user: id={}, email={}",
-                    user.getId(),
-                    user.getEmail(),
-                    e);
+            log.error("Failed to generate JWT token for user: id={}", user.getId(), e);
             throw new JwtTokenGenerationException("Failed to generate JWT token", e);
         }
     }
 
     public boolean validateToken(String token) {
         if (token == null || token.trim().isEmpty()) {
-            log.debug("JWT token validation failed: token is null or empty");
             return false;
         }
 

@@ -37,7 +37,6 @@ public class UserController {
             response.addCookie(jwtCookie);
 
             captureLogoutMetric(request);
-            log.info("JWT cookie cleared successfully");
 
             return ResponseEntity.ok().body(Map.of("message", "Logged out successfully"));
 

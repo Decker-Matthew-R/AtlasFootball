@@ -183,15 +183,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      console.log('Before logout - cookies:', document.cookie);
-
       await logUserOut();
 
-      console.log('Backend logout successful');
-
       deleteCookie('user_info');
-
-      console.log('After logout - cookies:', document.cookie);
 
       dispatch({ type: USER_ACTIONS.LOGOUT });
 
