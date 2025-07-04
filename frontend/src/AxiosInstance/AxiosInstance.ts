@@ -87,16 +87,12 @@ export const axiosInstance = (): AxiosInstance => {
         originalRequest._csrfRetryAttempted = true;
 
         try {
-          console.log('403 detected, attempting CSRF token refresh...');
-
           await fetchCsrfToken();
 
           const newCsrfToken = getCsrfToken();
           if (newCsrfToken) {
             originalRequest.headers = originalRequest.headers || {};
             originalRequest.headers[XSRF_TOKEN_HEADER_NAME] = newCsrfToken;
-
-            console.log('CSRF token refreshed, retrying original request...');
 
             return instance.request(originalRequest);
           }

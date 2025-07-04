@@ -27,12 +27,6 @@ public class UserService {
         String providerUserId = oAuth2User.getAttribute("sub");
         String profilePicture = oAuth2User.getAttribute("picture");
 
-        log.info(
-                "Processing OAuth user: email={}, provider={}, providerUserId={}",
-                email,
-                providerName,
-                providerUserId);
-
         Optional<UserOAuthProvider> existingOAuth =
                 oauthProviderRepository.findByProviderNameAndProviderUserIdWithUser(
                         providerName, providerUserId);
@@ -41,7 +35,6 @@ public class UserService {
             UserEntity user = existingOAuth.get().getUser();
             updateUserFromOAuth(user, oAuth2User);
             updateOAuthProviderLastUsed(existingOAuth.get());
-            log.info("Updated existing user: id={}, email={}", user.getId(), user.getEmail());
             return userRepository.save(user);
         }
 
@@ -51,14 +44,10 @@ public class UserService {
         if (existingUser.isPresent()) {
             user = existingUser.get();
             updateUserFromOAuth(user, oAuth2User);
-            log.info(
-                    "Linking OAuth provider {} to existing user: id={}",
-                    providerName,
-                    user.getId());
+
         } else {
             user = createNewUserFromOAuth(oAuth2User);
             user = userRepository.save(user);
-            log.info("Created new user: id={}, email={}", user.getId(), user.getEmail());
         }
 
         linkOAuthProvider(user, providerName, providerUserId, email);
@@ -135,12 +124,6 @@ public class UserService {
 
         user.addOAuthProvider(oauthProvider);
         oauthProviderRepository.save(oauthProvider);
-
-        log.info(
-                "Linked OAuth provider: userId={}, provider={}, providerUserId={}",
-                user.getId(),
-                providerName,
-                providerUserId);
     }
 
     @Transactional(readOnly = true)
