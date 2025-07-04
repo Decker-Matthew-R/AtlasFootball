@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -226,5 +228,86 @@ class UserControllerTest {
         Cookie invalidJwtCookie = new Cookie("jwt", "invalid-token");
 
         mockMvc.perform(post("/api/logout").cookie(invalidJwtCookie)).andExpect(status().isOk());
+    }
+
+    @Test
+    void logout_shouldHandleUnexpectedExceptionAndReturnError() throws Exception {
+        doThrow(new RuntimeException("Critical system error"))
+                .when(jwtTokenProvider)
+                .getUserIdFromToken(anyString());
+
+        Cookie jwtCookie = new Cookie("jwt", "valid-token");
+
+        mockMvc.perform(post("/api/logout").cookie(jwtCookie)).andExpect(status().isOk());
+    }
+
+    @Test
+    void csrf_shouldReturnCsrfToken() throws Exception {
+        mockMvc.perform(get("/api/csrf").with(csrf()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void csrf_shouldReturnTokenWithCorrectStructure() throws Exception {
+        MvcResult result =
+                mockMvc.perform(
+                                get("/api/csrf")
+                                        .with(csrf())
+                                        .contentType(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        assertThat(responseBody).isNotEmpty();
+    }
+
+    @Test
+    void logout_shouldHandleNullCookiesArrayGracefully() throws Exception {
+        mockMvc.perform(post("/api/logout").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Logged out successfully"));
+    }
+
+    @Test
+    void logout_shouldHandleEmptyCookiesArray() throws Exception {
+        Cookie otherCookie = new Cookie("other", "value");
+
+        mockMvc.perform(
+                        post("/api/logout")
+                                .cookie(otherCookie)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Logged out successfully"));
+    }
+
+    @Test
+    void logout_shouldHandleNullJwtCookieValue() throws Exception {
+        Cookie nullJwtCookie = new Cookie("jwt", null);
+
+        mockMvc.perform(
+                        post("/api/logout")
+                                .cookie(nullJwtCookie)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Logged out successfully"));
+
+        verify(metricsService, never()).saveMetricEvent(any(MetricEventDTO.class));
+    }
+
+    @Test
+    void logout_shouldHandleJwtTokenProviderException() throws Exception {
+        when(jwtTokenProvider.getUserIdFromToken(anyString()))
+                .thenThrow(new RuntimeException("JWT parsing failed"));
+
+        Cookie jwtCookie = new Cookie("jwt", "invalid-token");
+
+        mockMvc.perform(
+                        post("/api/logout")
+                                .cookie(jwtCookie)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Logged out successfully"));
+
+        verify(metricsService, never()).saveMetricEvent(any(MetricEventDTO.class));
     }
 }
