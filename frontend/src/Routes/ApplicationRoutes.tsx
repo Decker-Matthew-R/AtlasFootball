@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 
 import LandingPage from '@/LandingPage/LandingPage';
+import ProfilePage from '@/ProfilePage/ProfilePage';
 
 const ApplicationRoutes = () => {
   return (
@@ -8,6 +9,10 @@ const ApplicationRoutes = () => {
       <Route
         element={<LandingPage />}
         path='/'
+      />
+      <Route
+        element={<ProfilePage />}
+        path='/profile'
       />
     </Routes>
   );

@@ -1,8 +1,8 @@
-import { Box } from '@mui/material';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { useLocation } from 'react-router-dom';
 
-import backgroundImage from '@/assets/landingPageGenericBackground.jpg';
+import backgroundImage from '@/assets/landingPageGenericBackground.avif';
 import { useUser } from '@/GlobalContext/UserContext/UserContext';
 import { useMetrics } from '@/metrics/client/MetricsClient';
 import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';

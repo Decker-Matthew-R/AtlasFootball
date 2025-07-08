@@ -36,7 +36,7 @@ export const Navbar = () => {
     { page: 'Matches', route: '/' },
   ];
   const settings: SettingItem[] = [
-    { setting: 'Profile', route: '/' },
+    { setting: 'Profile', route: '/profile' },
     {
       setting: 'Logout',
       action: () => {
