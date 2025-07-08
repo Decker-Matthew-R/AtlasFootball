@@ -129,7 +129,7 @@ describe('Navbar', () => {
     },
   );
 
-  it.each([['Profile', '/']])(
+  it.each([['Profile', '/profile']])(
     'desktop: should display profile icon, %s menu item when profile icon is clicked, the user navigates to %s and hide menu when user clicks away',
     async (menuItem, expectedRoute) => {
       vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({

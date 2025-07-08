@@ -2,7 +2,8 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
-import { Box, useTheme } from '@mui/material';
+import Box from '@mui/material/Box';
+import { useTheme } from '@mui/material/styles';
 
 export const Footer = () => {
   const theme = useTheme();
