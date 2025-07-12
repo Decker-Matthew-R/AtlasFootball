@@ -5,12 +5,13 @@ buildscript {
     configurations.configureEach {
         resolutionStrategy {
             force 'org.apache.commons:commons-compress:1.26.0'
+            force 'org.apache.commons:commons-lang3:3.18.0'
         }
     }
 }
 
 plugins {
-    id 'org.springframework.boot' version '3.5.0'
+    id 'org.springframework.boot' version '3.5.3'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
     id 'jacoco'
@@ -20,9 +21,28 @@ plugins {
     id 'com.diffplug.spotless' version '7.0.4'
 }
 
+
 configurations.configureEach {
     resolutionStrategy {
         force 'org.apache.commons:commons-compress:1.26.0'
+        force 'com.nimbusds:nimbus-jose-jwt:10.3.1'
+        force 'org.apache.commons:commons-lang3:3.18.0'
+    }
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.LENIENT
+    ignoredDependencies = []
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+
+    configureEach {
+        resolutionStrategy.activateDependencyLocking()
     }
 }
 
@@ -140,7 +160,6 @@ spotless {
         endWithNewline()
     }
 }
-
 
 tasks.register('jacocoCoverageSummary') {
     dependsOn jacocoTestReport
