@@ -100,6 +100,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.session:spring-session-jdbc'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'org.apache.httpcomponents.client5:httpclient5-win:5.2.3'
 
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'

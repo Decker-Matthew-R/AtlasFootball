@@ -60,7 +60,11 @@ spring:
         group:
             journey:
             dev: dev
-
+apis:
+    football:
+        base-url: https://api-football-v1.p.rapidapi.com/v3
+        api-key: ${RAPID_API_KEY}
+        api-host: api-football-v1.p.rapidapi.com
 application:
     hostname: http://localhost:8080
     logout:
