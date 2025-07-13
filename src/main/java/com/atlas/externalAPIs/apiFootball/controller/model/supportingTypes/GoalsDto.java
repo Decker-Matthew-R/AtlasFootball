@@ -1,11 +1,11 @@
-package com.atlas.externalAPIs.apiFootball.service.model.SupportingTypes;
+package com.atlas.externalAPIs.apiFootball.controller.model.supportingTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Goals {
+public class GoalsDto {
     private Integer home;
     private Integer away;
 }

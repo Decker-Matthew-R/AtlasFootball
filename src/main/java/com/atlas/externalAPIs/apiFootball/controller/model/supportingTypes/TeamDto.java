@@ -1,16 +1,13 @@
-package com.atlas.externalAPIs.apiFootball.service.model.SupportingTypes;
+package com.atlas.externalAPIs.apiFootball.controller.model.supportingTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class League {
+public class TeamDto {
     private Long id;
     private String name;
-    private String country;
     private String logo;
-    private String flag;
-    private Integer season;
-    private String round;
+    private Boolean winner;
 }
