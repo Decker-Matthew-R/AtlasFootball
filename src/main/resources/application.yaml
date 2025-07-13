@@ -63,7 +63,7 @@ spring:
 apis:
     football:
         base-url: https://api-football-v1.p.rapidapi.com/v3
-        api-key: ${RAPID_API_KEY}
+        api-key: cd3e47066emshee6c4ccd8595e7bp1dcd28jsn8733ecbb4754
         api-host: api-football-v1.p.rapidapi.com
 application:
     hostname: http://localhost:8080

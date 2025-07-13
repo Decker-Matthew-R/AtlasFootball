@@ -5,12 +5,17 @@ import com.atlas.externalAPIs.apiFootball.service.model.ExceptionTypes.ApiFootba
 import com.atlas.externalAPIs.apiFootball.service.model.request.FixtureRequest;
 import com.atlas.externalAPIs.apiFootball.service.model.response.FixtureResponse;
 import java.time.LocalDate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
+@Slf4j
 public class ApiFootballService {
 
     private final RestTemplate restTemplate;
@@ -41,10 +46,45 @@ public class ApiFootballService {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         try {
+            // Log what we're about to send
+            log.info("=== API CALL DEBUG ===");
+            log.info("URL: {}", url);
+            log.info("Headers: {}", headers);
+
+            // First, try to get the raw response as String to see what we're getting
+            ResponseEntity<String> rawResponse =
+                    restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            log.info("HTTP Status: {}", rawResponse.getStatusCode());
+            log.info("Response Headers: {}", rawResponse.getHeaders());
+            log.info("Raw Response Body: {}", rawResponse.getBody());
+
+            // Now try to parse it to your FixtureResponse class
             ResponseEntity<FixtureResponse> response =
                     restTemplate.exchange(url, HttpMethod.GET, entity, FixtureResponse.class);
+            log.info("Successfully parsed to FixtureResponse: {}", response.getBody());
+
             return response.getBody();
+        } catch (HttpClientErrorException e) {
+            // HTTP 4xx errors (401, 403, 404, etc.)
+            log.error(
+                    "HTTP Client Error: Status={}, Body={}",
+                    e.getStatusCode(),
+                    e.getResponseBodyAsString());
+            throw new ApiFootballException("HTTP error: " + e.getStatusCode(), e);
+        } catch (HttpServerErrorException e) {
+            // HTTP 5xx errors
+            log.error(
+                    "HTTP Server Error: Status={}, Body={}",
+                    e.getStatusCode(),
+                    e.getResponseBodyAsString());
+            throw new ApiFootballException("Server error: " + e.getStatusCode(), e);
+        } catch (ResourceAccessException e) {
+            // Network/timeout issues
+            log.error("Network/Timeout Error: {}", e.getMessage());
+            throw new ApiFootballException("Network error", e);
         } catch (Exception e) {
+            // Parsing/serialization errors or other issues
+            log.error("Unexpected error: {}", e.getMessage(), e);
             throw new ApiFootballException("Failed to fetch fixtures", e);
         }
     }

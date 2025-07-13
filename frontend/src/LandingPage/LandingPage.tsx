@@ -1,15 +1,24 @@
+import { useEffect, useState } from 'react';
+
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { useLocation } from 'react-router-dom';
 
 import backgroundImage from '@/assets/landingPageGenericBackground.avif';
 import { useUser } from '@/GlobalContext/UserContext/UserContext';
+import { useFixtures } from '@/LandingPage/client/FixturesClient';
 import { useMetrics } from '@/metrics/client/MetricsClient';
 import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
+
+import { FixtureDto, FixtureResponseDto } from './model/FixtureTypes';
 
 function LandingPage() {
   const { user } = useUser();
   const { saveMetricEvent } = useMetrics();
+  const [fixtures, setFixtures] = useState<FixtureDto[]>([]);
+  const { getUpcomingFixtures } = useFixtures();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const currentLocation = useLocation();
 
   const handleLogin = () => {
@@ -19,6 +28,32 @@ function LandingPage() {
     });
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
+
+  useEffect(() => {
+    const fetchFixtures = async () => {
+      if (!user) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response: FixtureResponseDto = await getUpcomingFixtures();
+
+        if (response.status === 'success') {
+          setFixtures(response.fixtures);
+        } else {
+          setError(response.message);
+        }
+      } catch (err) {
+        setError('Failed to load upcoming fixtures');
+        console.error('Error fetching fixtures:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFixtures();
+  }, [user]);
 
   return (
     <Box
