@@ -1,6 +1,6 @@
 package com.atlas.externalAPIs.apiFootball.service.model;
 
-import com.atlas.externalAPIs.apiFootball.service.model.SupportingTypes.*;
+import com.atlas.externalAPIs.apiFootball.service.model.supportingTypes.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
