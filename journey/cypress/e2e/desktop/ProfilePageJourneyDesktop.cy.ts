@@ -25,11 +25,13 @@ describe("As a desktop user on the profile page", () => {
 
     cy.get('@profilePage').click();
 
-    cy.findByLabelText('profile-page-user-avatar').as('avatar');
-    cy.get('@avatar').should('be.visible')
-    cy.get('@avatar').should('contain.text', 'A')
-
     cy.findByText('Authenticated User').as('userName');
     cy.get('@userName').should('be.visible');
+
+    cy.findByLabelText('profile-page-user-avatar').as('avatar');
+    cy.get('@avatar').should('be.visible')
+
+    cy.get('@avatar').should('contain.text', 'A')
+
   });
 });
