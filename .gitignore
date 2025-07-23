@@ -49,3 +49,5 @@ postgres-data
 /journey/cypress/screenshots
 /journey/cypress/videos
 /journey/cypress/downloads
+
+.claude

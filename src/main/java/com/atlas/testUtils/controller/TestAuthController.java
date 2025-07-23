@@ -104,7 +104,7 @@ public class TestAuthController {
         testUser.setFirstName(nameParts[0]);
         testUser.setLastName(nameParts.length > 1 ? nameParts[1] : "");
 
-        testUser.setProfilePictureUrl("https://example.com/test-avatar.jpg");
+        //        testUser.setProfilePictureUrl("https://example.com/test-avatar.jpg");
 
         try {
             testUser = userRepository.save(testUser);
