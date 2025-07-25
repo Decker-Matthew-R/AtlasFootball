@@ -50,4 +50,5 @@ postgres-data
 /journey/cypress/videos
 /journey/cypress/downloads
 
-.claude
+# Redis data
+redis-data/
