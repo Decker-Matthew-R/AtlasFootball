@@ -9,6 +9,7 @@ public class FixtureRequest {
     private String from;
     private String to;
     private String timezone;
-    private Integer league;
+    private String league;
     private String status;
+    private String next;
 }

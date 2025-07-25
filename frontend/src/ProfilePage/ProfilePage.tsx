@@ -6,6 +6,7 @@ import { useUser } from '@/GlobalContext/UserContext/UserContext';
 
 const ProfilePage = () => {
   const { user } = useUser();
+
   return (
     <Box
       display='flex'
