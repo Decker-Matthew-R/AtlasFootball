@@ -99,6 +99,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.session:spring-session-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'org.apache.httpcomponents.client5:httpclient5-win:5.2.3'
 
