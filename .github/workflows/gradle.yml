@@ -33,19 +33,19 @@ jobs:
                     java-version: '17'
                     distribution: 'temurin'
 
-            -   name: Clean Test Database Migrations With Flyway
-                run: ./gradlew flywayTestDbClean
-                env:
-                    SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/atlas_test
-                    SPRING_DATASOURCE_USERNAME: atlas_test
-                    SPRING_DATASOURCE_PASSWORD: password
-
-            -   name: Run Test Database Migrations With Flyway
-                run: ./gradlew flywayTestDbMigrate
-                env:
-                    SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/atlas_test
-                    SPRING_DATASOURCE_USERNAME: atlas_test
-                    SPRING_DATASOURCE_PASSWORD: password
+#            -   name: Clean Test Database Migrations With Flyway
+#                run: ./gradlew flywayTestDbClean
+#                env:
+#                    SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/atlas_test
+#                    SPRING_DATASOURCE_USERNAME: atlas_test
+#                    SPRING_DATASOURCE_PASSWORD: password
+#
+#            -   name: Run Test Database Migrations With Flyway
+#                run: ./gradlew flywayTestDbMigrate
+#                env:
+#                    SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/atlas_test
+#                    SPRING_DATASOURCE_USERNAME: atlas_test
+#                    SPRING_DATASOURCE_PASSWORD: password
 
             # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
             # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
@@ -113,12 +113,12 @@ jobs:
                     java-version: '17'
                     distribution: 'temurin'
 
-            -   name: Clean Journey Database Migrations With Flyway
-                run: ./gradlew flywayJourneyTestDbClean
-                env:
-                    SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5434/atlas_journey
-                    SPRING_DATASOURCE_USERNAME: atlas_journey
-                    SPRING_DATASOURCE_PASSWORD: password
+#            -   name: Clean Journey Database Migrations With Flyway
+#                run: ./gradlew flywayJourneyTestDbClean
+#                env:
+#                    SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5434/atlas_journey
+#                    SPRING_DATASOURCE_USERNAME: atlas_journey
+#                    SPRING_DATASOURCE_PASSWORD: password
 
             -   name: Run Journey Tests
                 run: ./gradlew testJourney
