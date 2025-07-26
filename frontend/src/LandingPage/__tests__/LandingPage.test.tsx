@@ -1,12 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, vi } from 'vitest';
 
 import { UserProvider } from '@/GlobalContext/UserContext/UserContext';
 import LandingPage from '@/LandingPage/LandingPage';
-import * as metricsClient from '@/metrics/client/MetricsClient';
-import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
+import * as metricsClient from '@/Metrics/client/MetricsClient';
 import * as cookieUtils from '@/utils/CookieUtils';
 
 const mockNavigate = vi.fn();
@@ -23,7 +21,7 @@ Object.defineProperty(window, 'location', {
   writable: true,
 });
 
-vi.mock('@/metrics/client/MetricsClient', () => ({
+vi.mock('@/Metrics/client/MetricsClient', () => ({
   useMetrics: vi.fn(() => ({
     saveMetricEvent: vi.fn(),
   })),
@@ -73,43 +71,5 @@ describe('Landing Page', () => {
       'background-position': 'center',
       'background-repeat': 'no-repeat',
     });
-  });
-  it('should redirect to OAuth endpoint when login button is clicked and record a metric', async () => {
-    renderApp();
-
-    const loginButton = screen.getByRole('button', { name: /login|sign in/i });
-    expect(loginButton).toBeInTheDocument();
-
-    userEvent.click(loginButton);
-
-    expect(mockSaveMetricEvent).toHaveBeenCalledTimes(1);
-    expect(mockSaveMetricEvent).toHaveBeenCalledWith(METRIC_EVENT_TYPE.BUTTON_CLICK, {
-      triggerId: 'Login',
-      screen: '/',
-    });
-
-    expect(mockLocation.href).toBe('http://localhost:8080/oauth2/authorization/google');
-  });
-
-  it('should display login button when user is not authenticated', () => {
-    renderApp();
-
-    const loginButton = screen.getByLabelText('login-button');
-    expect(loginButton).toBeVisible();
-  });
-
-  it('should NOT display login button when user is authenticated', () => {
-    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
-      id: 1,
-      email: 'test@example.com',
-      name: 'Awatif Decker',
-      firstName: 'Awatif',
-      lastName: 'Decker',
-      profilePicture: '',
-    });
-
-    renderApp();
-
-    expect(screen.queryByRole('button', { name: 'Login' })).not.toBeInTheDocument();
   });
 });

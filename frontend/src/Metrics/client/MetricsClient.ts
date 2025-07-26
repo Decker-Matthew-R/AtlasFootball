@@ -1,9 +1,9 @@
 import { API_ENDPOINTS } from '@/ApiEndpoints/API_ENDPOINTS';
 import axiosInstance from '@/AxiosInstance/AxiosInstance';
 import { useUser } from '@/GlobalContext/UserContext/UserContext';
-import { MetadataType } from '@/metrics/model/MetadataType';
-import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
-import { MetricEventType } from '@/metrics/model/MetricEventType';
+import { MetadataType } from '@/Metrics/model/MetadataType';
+import { METRIC_EVENT_TYPE } from '@/Metrics/model/METRIC_EVENT_TYPE';
+import { MetricEventType } from '@/Metrics/model/MetricEventType';
 
 export const useMetrics = () => {
   const { user } = useUser();

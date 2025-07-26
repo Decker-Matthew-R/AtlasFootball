@@ -4,8 +4,8 @@ import { BrowserRouter } from 'react-router-dom';
 import { describe, it, vi, beforeEach } from 'vitest';
 
 import { UserProvider } from '@/GlobalContext/UserContext/UserContext';
-import * as metricsClient from '@/metrics/client/MetricsClient';
-import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
+import * as metricsClient from '@/Metrics/client/MetricsClient';
+import { METRIC_EVENT_TYPE } from '@/Metrics/model/METRIC_EVENT_TYPE';
 import { Navbar } from '@/Navbar/Navbar';
 import * as cookieUtils from '@/utils/CookieUtils';
 
@@ -34,7 +34,7 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-vi.mock('@/metrics/client/MetricsClient', () => ({
+vi.mock('@/Metrics/client/MetricsClient', () => ({
   useMetrics: vi.fn(() => ({
     saveMetricEvent: vi.fn(),
   })),
