@@ -359,7 +359,7 @@ class ApiFootballServiceTest {
 
         assertEquals("Failed to fetch fixtures", exception.getMessage());
         assertNotNull(exception.getCause());
-        assertTrue(exception.getCause() instanceof HttpClientErrorException);
+        assertInstanceOf(HttpClientErrorException.class, exception.getCause());
     }
 
     @Test
@@ -372,7 +372,7 @@ class ApiFootballServiceTest {
                         eq(HttpMethod.GET),
                         any(HttpEntity.class),
                         eq(FixtureResponse.class)))
-                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+                .thenReturn(ResponseEntity.ok().build());
 
         assertThrows(
                 AssertionError.class,

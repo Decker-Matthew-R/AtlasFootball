@@ -65,10 +65,3 @@ app:
         secret: ${JWT_SECRET:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ab}
         expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
-#atlas:
-#  concurrency:
-#    timeout-in-seconds: 300
-#  migration:
-#    check-point-frequency: 5
-#    pause-frequency-in-seconds: 300
-#    pause-duration-in-seconds: 1

@@ -11,7 +11,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.springframework.boot' version '3.5.3'
+    id 'org.springframework.boot' version '4.0.0-M1'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
     id 'jacoco'
@@ -27,6 +27,11 @@ configurations.configureEach {
         force 'org.apache.commons:commons-compress:1.26.0'
         force 'com.nimbusds:nimbus-jose-jwt:10.3.1'
         force 'org.apache.commons:commons-lang3:3.18.0'
+//        force 'org.springframework:spring-web:7.0.0-M7'
+//        force 'org.springframework:spring-webmvc:7.0.0-M7'
+//        force 'org.springframework:spring-core:7.0.0-M7'
+//        force 'org.springframework:spring-context:7.0.0-M7'
+//        force 'org.springframework:spring-beans:7.0.0-M7'
     }
 }
 
@@ -85,7 +90,7 @@ configurations {
 
 dependencyManagement {
     dependencies {
-        dependency 'org.springframework:spring-web:6.2.8'
+//        dependency 'org.springframework:spring-web:6.2.8'
         dependency 'org.apache.tomcat.embed:tomcat-embed-core:10.1.42'
     }
 }
@@ -438,6 +443,8 @@ test {
     finalizedBy jacocoTestReport
     minHeapSize = "1024m"
     maxHeapSize = "2048m"
+
+    dependsOn("flywayTestDbClean", "flywayTestDbMigrate")
 }
 
 tasks.register('installFrontend', Exec) {
@@ -489,7 +496,7 @@ tasks.register('testFrontend', Exec) {
 }
 
 tasks.register('testJourney', Exec) {
-    dependsOn("installJourney")
+    dependsOn("installJourney", 'flywayJourneyTestDbClean', 'flywayJourneyTestDbMigrate')
     commandLine("yarn", "--cwd", "journey", "test")
     environment("SPRING_PROFILES_ACTIVE", "journey")
 }
@@ -508,18 +515,27 @@ tasks.register('flywayTestDbClean', FlywayCleanTask) {
     cleanDisabled = false
 }
 
-tasks.register('flywayJourneyTestDbClean', FlywayCleanTask) {
-    url = 'jdbc:postgresql://localhost:5434/atlas_journey'
-    user = 'atlas_journey'
-    password = 'password'
-    cleanDisabled = false
-}
 tasks.register('flywayTestDbMigrate', FlywayMigrateTask) {
     url = 'jdbc:postgresql://localhost:5433/atlas_test'
     user = 'atlas_test'
     password = 'password'
     cleanDisabled = false
 }
+
+tasks.register('flywayJourneyTestDbClean', FlywayCleanTask) {
+    url = 'jdbc:postgresql://localhost:5434/atlas_journey'
+    user = 'atlas_journey'
+    password = 'password'
+    cleanDisabled = false
+}
+
+tasks.register('flywayJourneyTestDbMigrate', FlywayMigrateTask) {
+    url = 'jdbc:postgresql://localhost:5434/atlas_journey'
+    user = 'atlas_journey'
+    password = 'password'
+    cleanDisabled = false
+}
+
 
 tasks.register('testPerformance', Exec) {
     dependsOn("installPerformance")
@@ -531,7 +547,7 @@ tasks.register("testUnits"){
 }
 
 tasks.register('testAll') {
-    dependsOn("flywayTestDbClean", "test", "testFrontend", "testJourney")
+    dependsOn("test", "testFrontend", "testJourney")
 }
 
 tasks.register('showRepositories') {
