@@ -23,7 +23,7 @@ Object.defineProperty(window, 'location', {
   writable: true,
 });
 
-vi.mock('@/metrics/client/MetricsClient', () => ({
+vi.mock('@/Metrics/client/MetricsClient', () => ({
   useMetrics: vi.fn(() => ({
     saveMetricEvent: vi.fn(),
   })),

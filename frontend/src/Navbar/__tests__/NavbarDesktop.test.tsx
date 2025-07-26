@@ -34,7 +34,7 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-vi.mock('@/metrics/client/MetricsClient', () => ({
+vi.mock('@/Metrics/client/MetricsClient', () => ({
   useMetrics: vi.fn(() => ({
     saveMetricEvent: vi.fn(),
   })),
