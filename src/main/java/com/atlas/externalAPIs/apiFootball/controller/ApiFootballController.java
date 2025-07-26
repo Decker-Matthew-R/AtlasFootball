@@ -27,7 +27,8 @@ public class ApiFootballController {
     public ResponseEntity<FixtureResponseDto> getUpcomingFixtures() {
         try {
 
-            FixtureResponse serviceResponse = apiFootballService.getUpcomingFixtures();
+            FixtureResponse serviceResponse =
+                    apiFootballService.getUpcomingFixturesForTopFiveLeagues();
             FixtureResponseDto responseDto = fixtureMapperService.mapToDto(serviceResponse);
 
             log.info("Successfully retrieved {} fixtures", responseDto.getResults());

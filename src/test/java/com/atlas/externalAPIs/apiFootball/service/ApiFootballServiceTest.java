@@ -1,29 +1,28 @@
 package com.atlas.externalAPIs.apiFootball.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.atlas.externalAPIs.apiFootball.config.ApiFootballConfig;
 import com.atlas.externalAPIs.apiFootball.service.model.ExceptionTypes.ApiFootballException;
 import com.atlas.externalAPIs.apiFootball.service.model.Fixture;
+import com.atlas.externalAPIs.apiFootball.service.model.LeagueEnum;
 import com.atlas.externalAPIs.apiFootball.service.model.request.FixtureRequest;
 import com.atlas.externalAPIs.apiFootball.service.model.response.FixtureResponse;
-import com.atlas.externalAPIs.apiFootball.service.model.supportingTypes.FixtureDetails;
-import com.atlas.externalAPIs.apiFootball.service.model.supportingTypes.League;
-import com.atlas.externalAPIs.apiFootball.service.model.supportingTypes.Team;
-import com.atlas.externalAPIs.apiFootball.service.model.supportingTypes.Teams;
-import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.*;
-import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,245 +32,400 @@ class ApiFootballServiceTest {
 
     @Mock private ApiFootballConfig config;
 
-    private ApiFootballService service;
+    @InjectMocks private ApiFootballService apiFootballService;
+
+    private static final String BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
+    private static final String API_KEY = "test-api-key";
+    private static final String API_HOST = "api-football-v1.p.rapidapi.com";
 
     @BeforeEach
     void setUp() {
-        service = new ApiFootballService(restTemplate, config);
+        when(config.getBaseUrl()).thenReturn(BASE_URL);
     }
 
     @Test
-    void getUpcomingFixtures_ShouldReturnFixtures_WhenApiCallSucceeds() {
-        setupConfigMocks();
-        FixtureResponse mockResponse = createMockFixtureResponse();
-        ResponseEntity<FixtureResponse> responseEntity = ResponseEntity.ok(mockResponse);
+    void getUpcomingFixturesForTopFiveLeagues_SuccessfulResponse_ReturnsAllFixtures() {
+        List<Fixture> premierLeagueFixtures = createMockFixtures(30);
+        List<Fixture> laLigaFixtures = createMockFixtures(30);
+        List<Fixture> bundesligaFixtures = createMockFixtures(30);
+        List<Fixture> serieAFixtures = createMockFixtures(30);
+        List<Fixture> ligue1Fixtures = createMockFixtures(30);
+
+        FixtureResponse premierLeagueResponse = createMockResponse(premierLeagueFixtures);
+        FixtureResponse laLigaResponse = createMockResponse(laLigaFixtures);
+        FixtureResponse bundesligaResponse = createMockResponse(bundesligaFixtures);
+        FixtureResponse serieAResponse = createMockResponse(serieAFixtures);
+        FixtureResponse ligue1Response = createMockResponse(ligue1Fixtures);
+
+        when(restTemplate.exchange(
+                        contains("league=39"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(premierLeagueResponse, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+                        contains("league=140"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(laLigaResponse, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+                        contains("league=78"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(bundesligaResponse, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+                        contains("league=135"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(serieAResponse, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+                        contains("league=61"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(ligue1Response, HttpStatus.OK));
+
+        try (MockedStatic<LeagueEnum> leagueMock = mockStatic(LeagueEnum.class)) {
+            leagueMock
+                    .when(LeagueEnum::getTopFiveLeagues)
+                    .thenReturn(
+                            Arrays.asList(
+                                    LeagueEnum.PREMIER_LEAGUE,
+                                    LeagueEnum.LA_LIGA,
+                                    LeagueEnum.BUNDESLIGA,
+                                    LeagueEnum.SERIE_A,
+                                    LeagueEnum.LIGUE_1));
+
+            FixtureResponse result = apiFootballService.getUpcomingFixturesForTopFiveLeagues();
+
+            assertNotNull(result);
+            assertEquals(150, result.getResults());
+            assertEquals(150, result.getResponse().size());
+
+            verify(restTemplate, times(5))
+                    .exchange(
+                            anyString(),
+                            eq(HttpMethod.GET),
+                            any(HttpEntity.class),
+                            eq(FixtureResponse.class));
+        }
+    }
+
+    @Test
+    void getUpcomingFixturesForTopFiveLeagues_OneLeagueFailsOthersSucceed_ReturnsPartialResults() {
+        List<Fixture> premierLeagueFixtures = createMockFixtures(30);
+        List<Fixture> laLigaFixtures = createMockFixtures(30);
+        List<Fixture> bundesligaFixtures = createMockFixtures(30);
+        List<Fixture> serieAFixtures = createMockFixtures(30);
+
+        FixtureResponse premierLeagueResponse = createMockResponse(premierLeagueFixtures);
+        FixtureResponse laLigaResponse = createMockResponse(laLigaFixtures);
+        FixtureResponse bundesligaResponse = createMockResponse(bundesligaFixtures);
+        FixtureResponse serieAResponse = createMockResponse(serieAFixtures);
+
+        when(restTemplate.exchange(
+                        contains("league=39"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(premierLeagueResponse, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+                        contains("league=140"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(laLigaResponse, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+                        contains("league=78"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(bundesligaResponse, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+                        contains("league=135"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(serieAResponse, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+                        contains("league=61"),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        try (MockedStatic<LeagueEnum> leagueMock = mockStatic(LeagueEnum.class)) {
+            leagueMock
+                    .when(LeagueEnum::getTopFiveLeagues)
+                    .thenReturn(
+                            Arrays.asList(
+                                    LeagueEnum.PREMIER_LEAGUE,
+                                    LeagueEnum.LA_LIGA,
+                                    LeagueEnum.BUNDESLIGA,
+                                    LeagueEnum.SERIE_A,
+                                    LeagueEnum.LIGUE_1));
+
+            FixtureResponse result = apiFootballService.getUpcomingFixturesForTopFiveLeagues();
+
+            assertNotNull(result);
+            assertEquals(120, result.getResults());
+            assertEquals(120, result.getResponse().size());
+        }
+    }
+
+    @Test
+    void getUpcomingFixturesForTopFiveLeagues_AllLeaguesFail_ReturnsEmptyResponse() {
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        try (MockedStatic<LeagueEnum> leagueMock = mockStatic(LeagueEnum.class)) {
+            leagueMock
+                    .when(LeagueEnum::getTopFiveLeagues)
+                    .thenReturn(
+                            Arrays.asList(
+                                    LeagueEnum.PREMIER_LEAGUE,
+                                    LeagueEnum.LA_LIGA,
+                                    LeagueEnum.BUNDESLIGA,
+                                    LeagueEnum.SERIE_A,
+                                    LeagueEnum.LIGUE_1));
+
+            FixtureResponse result = apiFootballService.getUpcomingFixturesForTopFiveLeagues();
+
+            assertNotNull(result);
+            assertEquals(0, result.getResults());
+            assertEquals(0, result.getResponse().size());
+        }
+    }
+
+    @Test
+    void getUpcomingFixturesForTopFiveLeagues_NullResponseFromAPI_HandlesGracefully() {
+        FixtureResponse nullResponse = new FixtureResponse();
+        nullResponse.setResponse(null);
 
         when(restTemplate.exchange(
                         anyString(),
                         eq(HttpMethod.GET),
                         any(HttpEntity.class),
                         eq(FixtureResponse.class)))
-                .thenReturn(responseEntity);
+                .thenReturn(new ResponseEntity<>(nullResponse, HttpStatus.OK));
 
-        FixtureResponse result = service.getUpcomingFixtures();
+        try (MockedStatic<LeagueEnum> leagueMock = mockStatic(LeagueEnum.class)) {
+            leagueMock
+                    .when(LeagueEnum::getTopFiveLeagues)
+                    .thenReturn(
+                            Arrays.asList(
+                                    LeagueEnum.PREMIER_LEAGUE,
+                                    LeagueEnum.LA_LIGA,
+                                    LeagueEnum.BUNDESLIGA,
+                                    LeagueEnum.SERIE_A,
+                                    LeagueEnum.LIGUE_1));
 
-        assertThat(result).isNotNull();
-        assertThat(result.getResults()).isEqualTo(2);
-        assertThat(result.getResponse()).hasSize(2);
-        assertThat(result.getResponse().get(0).getTeams().getHome().getName())
-                .isEqualTo("Manchester United");
-        assertThat(result.getResponse().get(1).getTeams().getAway().getName())
-                .isEqualTo("Liverpool");
+            FixtureResponse result = apiFootballService.getUpcomingFixturesForTopFiveLeagues();
+
+            assertNotNull(result);
+            assertEquals(0, result.getResults());
+            assertEquals(0, result.getResponse().size());
+        }
     }
 
     @Test
-    void getUpcomingFixtures_ShouldThrowException_WhenApiCallFails() {
-        setupConfigMocks();
+    void buildUrl_AllParameters_BuildsCorrectUrl() {
+        FixtureRequest request =
+                FixtureRequest.builder().next("30").league("39").timezone("UTC").build();
+
+        String result = apiFootballService.buildUrl(request);
+
+        assertTrue(result.contains(BASE_URL + "/fixtures"));
+        assertTrue(result.contains("next=30"));
+        assertTrue(result.contains("league=39"));
+        assertTrue(result.contains("timezone=UTC"));
+    }
+
+    @Test
+    void buildUrl_OnlyNextParameter_BuildsCorrectUrl() {
+        FixtureRequest request = FixtureRequest.builder().next("20").build();
+
+        String result = apiFootballService.buildUrl(request);
+
+        assertTrue(result.contains(BASE_URL + "/fixtures"));
+        assertTrue(result.contains("next=20"));
+        assertFalse(result.contains("league="));
+        assertFalse(result.contains("timezone="));
+    }
+
+    @Test
+    void buildUrl_OnlyLeagueParameter_BuildsCorrectUrl() {
+        FixtureRequest request = FixtureRequest.builder().league("140").build();
+
+        String result = apiFootballService.buildUrl(request);
+
+        assertTrue(result.contains(BASE_URL + "/fixtures"));
+        assertTrue(result.contains("league=140"));
+        assertFalse(result.contains("next="));
+        assertFalse(result.contains("timezone="));
+    }
+
+    @Test
+    void buildUrl_OnlyTimezoneParameter_BuildsCorrectUrl() {
+        FixtureRequest request = FixtureRequest.builder().timezone("Europe/London").build();
+
+        String result = apiFootballService.buildUrl(request);
+
+        assertTrue(result.contains(BASE_URL + "/fixtures"));
+        assertTrue(result.contains("timezone=Europe/London"));
+        assertFalse(result.contains("next="));
+        assertFalse(result.contains("league="));
+    }
+
+    @Test
+    void buildUrl_NoParameters_BuildsBaseUrl() {
+        FixtureRequest request = FixtureRequest.builder().build();
+
+        String result = apiFootballService.buildUrl(request);
+
+        assertEquals(BASE_URL + "/fixtures", result);
+    }
+
+    @Test
+    void callFixturesApi_SuccessfulResponse_ReturnsFixtureResponse() {
+        when(config.getApiKey()).thenReturn(API_KEY);
+        when(config.getApiHost()).thenReturn(API_HOST);
+        FixtureRequest request =
+                FixtureRequest.builder().next("30").league("39").timezone("UTC").build();
+
+        List<Fixture> fixtures = createMockFixtures(30);
+        FixtureResponse expectedResponse = createMockResponse(fixtures);
+
         when(restTemplate.exchange(
                         anyString(),
                         eq(HttpMethod.GET),
                         any(HttpEntity.class),
                         eq(FixtureResponse.class)))
-                .thenThrow(new RestClientException("API connection failed"));
-        assertThatThrownBy(() -> service.getUpcomingFixtures())
-                .isInstanceOf(ApiFootballException.class)
-                .hasMessage("Failed to fetch fixtures")
-                .hasCauseInstanceOf(RestClientException.class);
-    }
+                .thenReturn(new ResponseEntity<>(expectedResponse, HttpStatus.OK));
 
-    @Test
-    void getUpcomingFixtures_ShouldCallCorrectUrl() {
-        setupConfigMocks();
-        LocalDate today = LocalDate.now();
-        LocalDate nextWeek = today.plusDays(7);
-        String expectedUrl =
-                "https://api-football-v1.p.rapidapi.com/v3/fixtures"
-                        + "?from="
-                        + today.toString()
-                        + "&to="
-                        + nextWeek.toString()
-                        + "&timezone=UTC";
+        FixtureResponse result = apiFootballService.callFixturesApi(request);
 
-        FixtureResponse mockResponse = createMockFixtureResponse();
-        ResponseEntity<FixtureResponse> responseEntity = ResponseEntity.ok(mockResponse);
+        assertNotNull(result);
+        assertEquals(30, result.getResults());
+        assertEquals(30, result.getResponse().size());
 
-        when(restTemplate.exchange(
-                        eq(expectedUrl),
-                        eq(HttpMethod.GET),
-                        any(HttpEntity.class),
-                        eq(FixtureResponse.class)))
-                .thenReturn(responseEntity);
-
-        service.getUpcomingFixtures();
-    }
-
-    @Test
-    void getUpcomingFixtures_ShouldIncludeCorrectHeaders() {
-        setupConfigMocks();
-        FixtureResponse mockResponse = createMockFixtureResponse();
-        ResponseEntity<FixtureResponse> responseEntity = ResponseEntity.ok(mockResponse);
-
-        when(restTemplate.exchange(
+        ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate)
+                .exchange(
                         anyString(),
                         eq(HttpMethod.GET),
-                        argThat(
-                                entity -> {
-                                    HttpHeaders headers = entity.getHeaders();
-                                    return headers.get("X-RapidAPI-Key").contains("test-api-key")
-                                            && headers.get("X-RapidAPI-Host")
-                                                    .contains("api-football-v1.p.rapidapi.com")
-                                            && headers.getContentType()
-                                                    .equals(MediaType.APPLICATION_JSON);
-                                }),
-                        eq(FixtureResponse.class)))
-                .thenReturn(responseEntity);
+                        entityCaptor.capture(),
+                        eq(FixtureResponse.class));
 
-        service.getUpcomingFixtures();
+        HttpHeaders headers = entityCaptor.getValue().getHeaders();
+        assertEquals(API_KEY, headers.getFirst("X-RapidAPI-Key"));
+        assertEquals(API_HOST, headers.getFirst("X-RapidAPI-Host"));
+        assertEquals(MediaType.APPLICATION_JSON, headers.getContentType());
     }
 
     @Test
-    void getUpcomingFixtures_ShouldReturnNull_WhenResponseBodyIsNull() {
-        setupConfigMocks();
-        ResponseEntity<FixtureResponse> responseEntity = ResponseEntity.ok(null);
+    void callFixturesApi_ApiThrowsException_ThrowsApiFootballException() {
+        FixtureRequest request =
+                FixtureRequest.builder().next("30").league("39").timezone("UTC").build();
 
         when(restTemplate.exchange(
                         anyString(),
                         eq(HttpMethod.GET),
                         any(HttpEntity.class),
                         eq(FixtureResponse.class)))
-                .thenReturn(responseEntity);
+                .thenThrow(new HttpClientErrorException(HttpStatus.FORBIDDEN, "Forbidden"));
 
-        FixtureResponse result = service.getUpcomingFixtures();
+        ApiFootballException exception =
+                assertThrows(
+                        ApiFootballException.class,
+                        () -> {
+                            apiFootballService.callFixturesApi(request);
+                        });
 
-        assertThat(result).isNull();
+        assertEquals("Failed to fetch fixtures", exception.getMessage());
+        assertNotNull(exception.getCause());
+        assertTrue(exception.getCause() instanceof HttpClientErrorException);
     }
 
     @Test
-    void buildUrl_ShouldHandleAllNullParameters() {
-        when(config.getBaseUrl()).thenReturn("https://api-football-v1.p.rapidapi.com/v3");
-
+    void callFixturesApi_NullResponseBody_ThrowsAssertionError() {
         FixtureRequest request =
-                FixtureRequest.builder().from(null).to(null).timezone(null).build();
+                FixtureRequest.builder().next("30").league("39").timezone("UTC").build();
 
-        String url = service.buildUrl(request);
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
 
-        assertThat(url).isEqualTo("https://api-football-v1.p.rapidapi.com/v3/fixtures");
+        assertThrows(
+                AssertionError.class,
+                () -> {
+                    apiFootballService.callFixturesApi(request);
+                });
     }
 
     @Test
-    void buildUrl_ShouldHandleNullFromParameter() {
-        when(config.getBaseUrl()).thenReturn("https://api-football-v1.p.rapidapi.com/v3");
+    void getFixturesForLeague_ValidLeagueId_CallsApiWithCorrectParameters() {
+        String leagueId = "39";
+        List<Fixture> fixtures = createMockFixtures(30);
+        FixtureResponse expectedResponse = createMockResponse(fixtures);
 
-        FixtureRequest request =
-                FixtureRequest.builder().from(null).to("2024-01-22").timezone("UTC").build();
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class)))
+                .thenReturn(new ResponseEntity<>(expectedResponse, HttpStatus.OK));
 
-        String url = service.buildUrl(request);
+        FixtureResponse result = apiFootballService.getFixturesForLeague(leagueId);
 
-        assertThat(url)
-                .isEqualTo(
-                        "https://api-football-v1.p.rapidapi.com/v3/fixtures?to=2024-01-22&timezone=UTC");
-        assertThat(url).doesNotContain("from=");
+        assertNotNull(result);
+        assertEquals(30, result.getResults());
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(restTemplate)
+                .exchange(
+                        urlCaptor.capture(),
+                        eq(HttpMethod.GET),
+                        any(HttpEntity.class),
+                        eq(FixtureResponse.class));
+
+        String capturedUrl = urlCaptor.getValue();
+        assertTrue(capturedUrl.contains("next=30"));
+        assertTrue(capturedUrl.contains("league=" + leagueId));
+        assertTrue(capturedUrl.contains("timezone=UTC"));
     }
 
-    @Test
-    void buildUrl_ShouldHandleNullToParameter() {
-        when(config.getBaseUrl()).thenReturn("https://api-football-v1.p.rapidapi.com/v3");
-
-        FixtureRequest request =
-                FixtureRequest.builder().from("2024-01-15").to(null).timezone("UTC").build();
-
-        String url = service.buildUrl(request);
-
-        assertThat(url)
-                .isEqualTo(
-                        "https://api-football-v1.p.rapidapi.com/v3/fixtures?from=2024-01-15&timezone=UTC");
-        assertThat(url).doesNotContain("to=");
+    private List<Fixture> createMockFixtures(int count) {
+        List<Fixture> fixtures = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Fixture fixture = new Fixture();
+            fixtures.add(fixture);
+        }
+        return fixtures;
     }
 
-    @Test
-    void buildUrl_ShouldHandleNullTimezoneParameter() {
-        when(config.getBaseUrl()).thenReturn("https://api-football-v1.p.rapidapi.com/v3");
-
-        FixtureRequest request =
-                FixtureRequest.builder().from("2024-01-15").to("2024-01-22").timezone(null).build();
-
-        String url = service.buildUrl(request);
-
-        assertThat(url)
-                .isEqualTo(
-                        "https://api-football-v1.p.rapidapi.com/v3/fixtures?from=2024-01-15&to=2024-01-22");
-        assertThat(url).doesNotContain("timezone=");
-    }
-
-    @Test
-    void buildUrl_ShouldHandleAllParametersPresent() {
-        when(config.getBaseUrl()).thenReturn("https://api-football-v1.p.rapidapi.com/v3");
-
-        FixtureRequest request =
-                FixtureRequest.builder()
-                        .from("2024-01-15")
-                        .to("2024-01-22")
-                        .timezone("UTC")
-                        .build();
-
-        String url = service.buildUrl(request);
-
-        assertThat(url)
-                .isEqualTo(
-                        "https://api-football-v1.p.rapidapi.com/v3/fixtures?from=2024-01-15&to=2024-01-22&timezone=UTC");
-    }
-
-    private void setupConfigMocks() {
-        when(config.getBaseUrl()).thenReturn("https://api-football-v1.p.rapidapi.com/v3");
-        when(config.getApiKey()).thenReturn("test-api-key");
-        when(config.getApiHost()).thenReturn("api-football-v1.p.rapidapi.com");
-    }
-
-    private FixtureResponse createMockFixtureResponse() {
+    private FixtureResponse createMockResponse(List<Fixture> fixtures) {
         FixtureResponse response = new FixtureResponse();
-        response.setResults(2);
-        response.setResponse(createMockFixtures());
+        response.setResponse(fixtures);
+        response.setResults(fixtures.size());
         return response;
-    }
-
-    private List<Fixture> createMockFixtures() {
-        Fixture fixture1 =
-                createMockFixture(
-                        1L,
-                        "2024-01-15T15:00:00+00:00",
-                        "Manchester United",
-                        "Chelsea",
-                        "Premier League");
-
-        Fixture fixture2 =
-                createMockFixture(
-                        2L, "2024-01-16T17:30:00+00:00", "Arsenal", "Liverpool", "Premier League");
-
-        return Arrays.asList(fixture1, fixture2);
-    }
-
-    private Fixture createMockFixture(
-            Long id, String date, String homeTeam, String awayTeam, String leagueName) {
-        Fixture fixture = new Fixture();
-
-        FixtureDetails fixtureDetails = new FixtureDetails();
-        fixtureDetails.setId(id);
-        fixtureDetails.setDate(date);
-        fixture.setFixture(fixtureDetails);
-
-        Teams teams = new Teams();
-        Team home = new Team();
-        home.setName(homeTeam);
-        Team away = new Team();
-        away.setName(awayTeam);
-        teams.setHome(home);
-        teams.setAway(away);
-        fixture.setTeams(teams);
-
-        League league = new League();
-        league.setName(leagueName);
-        fixture.setLeague(league);
-
-        return fixture;
     }
 }

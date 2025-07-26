@@ -44,7 +44,7 @@ class ApiFootballControllerTest {
         FixtureResponse serviceResponse = new FixtureResponse();
         FixtureResponseDto expectedDto = createSuccessResponse();
 
-        when(apiFootballService.getUpcomingFixtures()).thenReturn(serviceResponse);
+        when(apiFootballService.getUpcomingFixturesForTopFiveLeagues()).thenReturn(serviceResponse);
         when(fixtureMapperService.mapToDto(serviceResponse)).thenReturn(expectedDto);
 
         mockMvc.perform(get("/api/fixtures/upcoming").contentType(MediaType.APPLICATION_JSON))
@@ -56,7 +56,7 @@ class ApiFootballControllerTest {
                 .andExpect(jsonPath("$.fixtures").isArray())
                 .andExpect(jsonPath("$.fixtures.length()").value(2));
 
-        verify(apiFootballService).getUpcomingFixtures();
+        verify(apiFootballService).getUpcomingFixturesForTopFiveLeagues();
         verify(fixtureMapperService).mapToDto(serviceResponse);
     }
 
@@ -65,7 +65,7 @@ class ApiFootballControllerTest {
         FixtureResponse serviceResponse = new FixtureResponse();
         FixtureResponseDto expectedDto = createEmptyResponse();
 
-        when(apiFootballService.getUpcomingFixtures()).thenReturn(serviceResponse);
+        when(apiFootballService.getUpcomingFixturesForTopFiveLeagues()).thenReturn(serviceResponse);
         when(fixtureMapperService.mapToDto(serviceResponse)).thenReturn(expectedDto);
 
         mockMvc.perform(get("/api/fixtures/upcoming").contentType(MediaType.APPLICATION_JSON))
@@ -76,14 +76,14 @@ class ApiFootballControllerTest {
                 .andExpect(jsonPath("$.results").value(0))
                 .andExpect(jsonPath("$.fixtures").isEmpty());
 
-        verify(apiFootballService).getUpcomingFixtures();
+        verify(apiFootballService).getUpcomingFixturesForTopFiveLeagues();
         verify(fixtureMapperService).mapToDto(serviceResponse);
     }
 
     @Test
     void getUpcomingFixtures_ShouldReturnServiceUnavailable_WhenApiFootballExceptionThrown()
             throws Exception {
-        when(apiFootballService.getUpcomingFixtures())
+        when(apiFootballService.getUpcomingFixturesForTopFiveLeagues())
                 .thenThrow(new ApiFootballException("External API error", new RuntimeException()));
 
         mockMvc.perform(get("/api/fixtures/upcoming").contentType(MediaType.APPLICATION_JSON))
@@ -94,14 +94,14 @@ class ApiFootballControllerTest {
                 .andExpect(jsonPath("$.results").value(0))
                 .andExpect(jsonPath("$.fixtures").isEmpty());
 
-        verify(apiFootballService).getUpcomingFixtures();
+        verify(apiFootballService).getUpcomingFixturesForTopFiveLeagues();
         verifyNoInteractions(fixtureMapperService);
     }
 
     @Test
     void getUpcomingFixtures_ShouldReturnInternalServerError_WhenUnexpectedExceptionThrown()
             throws Exception {
-        when(apiFootballService.getUpcomingFixtures())
+        when(apiFootballService.getUpcomingFixturesForTopFiveLeagues())
                 .thenThrow(new RuntimeException("Unexpected error"));
 
         mockMvc.perform(get("/api/fixtures/upcoming").contentType(MediaType.APPLICATION_JSON))
@@ -112,7 +112,7 @@ class ApiFootballControllerTest {
                 .andExpect(jsonPath("$.results").value(0))
                 .andExpect(jsonPath("$.fixtures").isEmpty());
 
-        verify(apiFootballService).getUpcomingFixtures();
+        verify(apiFootballService).getUpcomingFixturesForTopFiveLeagues();
         verifyNoInteractions(fixtureMapperService);
     }
 
@@ -120,7 +120,7 @@ class ApiFootballControllerTest {
     void getUpcomingFixtures_ShouldReturnInternalServerError_WhenMapperServiceExceptionThrown()
             throws Exception {
         FixtureResponse serviceResponse = new FixtureResponse();
-        when(apiFootballService.getUpcomingFixtures()).thenReturn(serviceResponse);
+        when(apiFootballService.getUpcomingFixturesForTopFiveLeagues()).thenReturn(serviceResponse);
         when(fixtureMapperService.mapToDto(serviceResponse))
                 .thenThrow(new RuntimeException("Mapper error"));
 
@@ -132,13 +132,13 @@ class ApiFootballControllerTest {
                 .andExpect(jsonPath("$.results").value(0))
                 .andExpect(jsonPath("$.fixtures").isEmpty());
 
-        verify(apiFootballService).getUpcomingFixtures();
+        verify(apiFootballService).getUpcomingFixturesForTopFiveLeagues();
         verify(fixtureMapperService).mapToDto(serviceResponse);
     }
 
     @Test
     void getUpcomingFixtures_ShouldHandleNullServiceResponse() throws Exception {
-        when(apiFootballService.getUpcomingFixtures()).thenReturn(null);
+        when(apiFootballService.getUpcomingFixturesForTopFiveLeagues()).thenReturn(null);
         when(fixtureMapperService.mapToDto(null)).thenReturn(createEmptyResponse());
 
         mockMvc.perform(get("/api/fixtures/upcoming").contentType(MediaType.APPLICATION_JSON))
@@ -147,7 +147,7 @@ class ApiFootballControllerTest {
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.message").value("No fixtures found"));
 
-        verify(apiFootballService).getUpcomingFixtures();
+        verify(apiFootballService).getUpcomingFixturesForTopFiveLeagues();
         verify(fixtureMapperService).mapToDto(null);
     }
 
