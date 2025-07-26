@@ -5,8 +5,8 @@ import { describe, it, vi } from 'vitest';
 
 import { UserProvider } from '@/GlobalContext/UserContext/UserContext';
 import LandingPage from '@/LandingPage/LandingPage';
-import * as metricsClient from '@/metrics/client/MetricsClient';
-import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
+import * as metricsClient from '@/Metrics/client/MetricsClient';
+import { METRIC_EVENT_TYPE } from '@/Metrics/model/METRIC_EVENT_TYPE';
 import * as cookieUtils from '@/utils/CookieUtils';
 
 const mockNavigate = vi.fn();
