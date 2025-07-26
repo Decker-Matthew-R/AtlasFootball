@@ -1,12 +1,12 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, it, vi } from 'vitest';
+import { beforeEach, describe, it, vi } from 'vitest';
 
+import * as fixturesClient from '@/FixturesByLeague/client/FixturesClient';
+import * as fixtureHelpers from '@/FixturesByLeague/helper/fixtureHelpers';
 import { UserProvider } from '@/GlobalContext/UserContext/UserContext';
 import LandingPage from '@/LandingPage/LandingPage';
-import * as metricsClient from '@/metrics/client/MetricsClient';
-import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
+import * as metricsClient from '@/Metrics/client/MetricsClient';
 import * as cookieUtils from '@/utils/CookieUtils';
 
 const mockNavigate = vi.fn();
@@ -23,10 +23,18 @@ Object.defineProperty(window, 'location', {
   writable: true,
 });
 
-vi.mock('@/metrics/client/MetricsClient', () => ({
+vi.mock('@/Metrics/client/MetricsClient', () => ({
   useMetrics: vi.fn(() => ({
     saveMetricEvent: vi.fn(),
   })),
+}));
+
+vi.mock('@/FixturesByLeague/client/FixturesClient', () => ({
+  useFixtures: vi.fn(),
+}));
+
+vi.mock('@/FixturesByLeague/helper/fixtureHelpers', () => ({
+  groupFixturesByLeague: vi.fn(),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -42,6 +50,8 @@ vi.mock('react-router-dom', async () => {
 
 describe('Landing Page', () => {
   const mockSaveMetricEvent = vi.fn();
+  const mockFetchFixtures = vi.fn();
+  const mockGroupFixturesByLeague = vi.fn();
 
   beforeEach(() => {
     mockLocation.href = '';
@@ -50,6 +60,12 @@ describe('Landing Page', () => {
     vi.mocked(metricsClient.useMetrics).mockReturnValue({
       saveMetricEvent: mockSaveMetricEvent,
     });
+
+    vi.mocked(fixturesClient.useFixtures).mockReturnValue({
+      fetchFixtures: mockFetchFixtures,
+    });
+
+    vi.mocked(fixtureHelpers.groupFixturesByLeague).mockImplementation(mockGroupFixturesByLeague);
   });
 
   const renderApp = () => {
@@ -63,6 +79,9 @@ describe('Landing Page', () => {
   };
 
   it('Should contain a background image', async () => {
+    mockFetchFixtures.mockResolvedValue([]);
+    mockGroupFixturesByLeague.mockReturnValue({});
+
     renderApp();
 
     const backgroundBox = screen.getByTestId('landing-page-container');
@@ -74,42 +93,71 @@ describe('Landing Page', () => {
       'background-repeat': 'no-repeat',
     });
   });
-  it('should redirect to OAuth endpoint when login button is clicked and record a metric', async () => {
+
+  it('Should successfully load fixtures and call grouping helper', async () => {
+    const mockFixtures = [
+      { id: 1, leagueId: 1, homeTeam: 'Team A', awayTeam: 'Team B' },
+      { id: 2, leagueId: 1, homeTeam: 'Team C', awayTeam: 'Team D' },
+      { id: 3, leagueId: 2, homeTeam: 'Team E', awayTeam: 'Team F' },
+    ];
+
+    mockFetchFixtures.mockResolvedValue(mockFixtures);
+    mockGroupFixturesByLeague.mockReturnValue({});
+
     renderApp();
 
-    const loginButton = screen.getByRole('button', { name: /login|sign in/i });
-    expect(loginButton).toBeInTheDocument();
-
-    userEvent.click(loginButton);
-
-    expect(mockSaveMetricEvent).toHaveBeenCalledTimes(1);
-    expect(mockSaveMetricEvent).toHaveBeenCalledWith(METRIC_EVENT_TYPE.BUTTON_CLICK, {
-      triggerId: 'Login',
-      screen: '/',
+    await waitFor(() => {
+      expect(mockFetchFixtures).toHaveBeenCalledTimes(1);
     });
 
-    expect(mockLocation.href).toBe('http://localhost:8080/oauth2/authorization/google');
+    expect(mockGroupFixturesByLeague).toHaveBeenCalledWith(mockFixtures);
   });
 
-  it('should display login button when user is not authenticated', () => {
+  it('Should handle error when loading fixtures fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockError = new Error('Failed to fetch fixtures');
+
+    mockFetchFixtures.mockRejectedValue(mockError);
+    mockGroupFixturesByLeague.mockReturnValue({});
+
     renderApp();
 
-    const loginButton = screen.getByLabelText('login-button');
-    expect(loginButton).toBeVisible();
-  });
-
-  it('should NOT display login button when user is authenticated', () => {
-    vi.mocked(cookieUtils.parseUserInfoCookie).mockReturnValue({
-      id: 1,
-      email: 'test@example.com',
-      name: 'Awatif Decker',
-      firstName: 'Awatif',
-      lastName: 'Decker',
-      profilePicture: '',
+    await waitFor(() => {
+      expect(mockFetchFixtures).toHaveBeenCalledTimes(1);
     });
 
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to load fixtures:', mockError);
+    expect(mockGroupFixturesByLeague).toHaveBeenCalledWith([]);
+
+    consoleSpy.mockRestore();
+  });
+
+  it('Should display "No fixtures available" message when there are no fixtures', async () => {
+    mockFetchFixtures.mockResolvedValue([]);
+    mockGroupFixturesByLeague.mockReturnValue({});
+
     renderApp();
 
-    expect(screen.queryByRole('button', { name: 'Login' })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockFetchFixtures).toHaveBeenCalledTimes(1);
+    });
+
+    expect(screen.getByText('No fixtures available at the moment.')).toBeInTheDocument();
+  });
+
+  it('Should display "No fixtures available" message when fixtures load but grouping results in empty object', async () => {
+    const mockFixtures = [{ id: 1, leagueId: null, homeTeam: 'Team A', awayTeam: 'Team B' }];
+
+    mockFetchFixtures.mockResolvedValue(mockFixtures);
+    mockGroupFixturesByLeague.mockReturnValue({}); // Empty object - no valid leagues
+
+    renderApp();
+
+    await waitFor(() => {
+      expect(mockFetchFixtures).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockGroupFixturesByLeague).toHaveBeenCalledWith(mockFixtures);
+    expect(screen.getByText('No fixtures available at the moment.')).toBeInTheDocument();
   });
 });

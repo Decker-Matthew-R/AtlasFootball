@@ -5,9 +5,9 @@ import { describe, expect, vi, beforeEach } from 'vitest';
 import { API_ENDPOINTS } from '@/ApiEndpoints/API_ENDPOINTS';
 import { User } from '@/GlobalContext/UserContext/types/user';
 import { useUser } from '@/GlobalContext/UserContext/UserContext';
-import { useMetrics } from '@/metrics/client/MetricsClient';
-import { MetadataType } from '@/metrics/model/MetadataType';
-import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
+import { useMetrics } from '@/Metrics/client/MetricsClient';
+import { MetadataType } from '@/Metrics/model/MetadataType';
+import { METRIC_EVENT_TYPE } from '@/Metrics/model/METRIC_EVENT_TYPE';
 import { server } from '@/setupTests';
 
 vi.mock('@/GlobalContext/UserContext/UserContext', () => ({
