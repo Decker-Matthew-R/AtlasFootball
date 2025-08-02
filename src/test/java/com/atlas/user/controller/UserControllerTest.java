@@ -13,6 +13,7 @@ import com.atlas.config.jwt.JwtTokenProvider;
 import com.atlas.metrics.controller.model.MetricEventDTO;
 import com.atlas.metrics.controller.model.MetricEventType;
 import com.atlas.metrics.service.MetricsService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import java.util.Map;
@@ -54,7 +55,8 @@ class UserControllerTest {
                         .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
-        Map<String, String> responseMap = objectMapper.readValue(responseBody, Map.class);
+        Map<String, String> responseMap =
+                objectMapper.readValue(responseBody, new TypeReference<>() {});
 
         assertThat(responseMap).containsEntry("message", "Logged out successfully");
 

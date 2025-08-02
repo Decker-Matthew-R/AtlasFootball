@@ -13,6 +13,7 @@ import com.atlas.user.repository.UserRepository;
 import com.atlas.user.repository.model.UserEntity;
 import com.atlas.user.repository.model.UserOAuthProvider;
 import com.atlas.user.service.UserService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.Cookie;
@@ -138,7 +139,8 @@ public class OAuthFlowIntegrationTest {
 
         String decodedUserInfo =
                 URLDecoder.decode(userInfoCookie.getValue(), StandardCharsets.UTF_8);
-        Map<String, Object> userInfoData = objectMapper.readValue(decodedUserInfo, Map.class);
+        Map<String, Object> userInfoData =
+                objectMapper.readValue(decodedUserInfo, new TypeReference<>() {});
 
         assertThat(userInfoData.get("email")).isEqualTo("integration-test@gmail.com");
         assertThat(userInfoData.get("name")).isEqualTo("Integration Test");
@@ -158,7 +160,8 @@ public class OAuthFlowIntegrationTest {
         assertThat(loginMetric.getEventTime()).isNotNull();
 
         String metadataJson = loginMetric.getMetadata();
-        Map<String, Object> metadata = objectMapper.readValue(metadataJson, Map.class);
+        Map<String, Object> metadata =
+                objectMapper.readValue(metadataJson, new TypeReference<>() {});
         assertThat(metadata.get("triggerId")).isEqualTo("OAuth Success");
         assertThat(metadata.get("screen")).isEqualTo("N/A");
     }

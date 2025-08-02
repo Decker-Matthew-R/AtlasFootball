@@ -2,6 +2,7 @@ package com.atlas.config.jwt;
 
 import com.atlas.user.repository.model.UserEntity;
 import com.atlas.user.service.UserService;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -12,7 +13,6 @@ import java.util.Collections;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -30,9 +30,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     public void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain)
+            @Nonnull HttpServletRequest request,
+            @Nonnull HttpServletResponse response,
+            @Nonnull FilterChain filterChain)
             throws ServletException, IOException {
 
         try {
