@@ -67,7 +67,10 @@ repositories {
 
 group = 'com'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 flyway {
     url = 'jdbc:postgresql://localhost:5432/atlas_dev'
@@ -92,7 +95,7 @@ configurations {
 
 dependencyManagement {
     dependencies {
-        dependency 'org.apache.tomcat.embed:tomcat-embed-core:10.1.42'
+        dependency 'org.apache.tomcat.embed:tomcat-embed-core:10.1.43'
     }
 }
 
@@ -607,3 +610,5 @@ bootRun {
 clean {
     dependsOn(cleanFrontend)
 }
+
+apply from: 'gradle/cve-report.gradle'
