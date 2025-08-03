@@ -1,0 +1,38 @@
+tasks.register('formatProject') {
+    group = 'formatting'
+    description = '🎨 Format and fix all code (frontend + backend)'
+
+    doFirst {
+        println("🚀 Formatting entire project...")
+    }
+
+    dependsOn("spotlessApply")
+    dependsOn("installFrontend")
+    doLast {
+        println("🔧 Backend formatting complete")
+        println("💅 Starting frontend formatting...")
+
+        exec {
+            workingDir = project.file('frontend')
+            if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+                commandLine 'cmd', '/c', 'yarn', 'format'
+            } else {
+                commandLine 'yarn', 'format'
+            }
+        }
+
+        println("🔍 Auto-fixing frontend linting issues...")
+
+        exec {
+            workingDir = project.file('frontend')
+            if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+                commandLine 'cmd', '/c', 'yarn', 'lint:fix'
+            } else {
+                commandLine 'yarn', 'lint:fix'
+            }
+        }
+
+        println("✨ Project formatting complete!")
+        println("🎯 All code has been formatted and linted")
+    }
+}
