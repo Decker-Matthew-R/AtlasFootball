@@ -35,7 +35,7 @@ const FixtureCard: React.FC<FixtureCardProps> = ({ fixture }) => {
         height: 280,
         display: 'flex',
         flexDirection: 'column',
-        flexShrink: 0, // Prevent card from shrinking in flex container
+        flexShrink: 0,
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-4px)',
@@ -58,10 +58,7 @@ const FixtureCard: React.FC<FixtureCardProps> = ({ fixture }) => {
             variant={isLive ? 'filled' : 'outlined'}
           />
         </Box>
-
-        {/* Teams */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Home Team */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               component='img'
@@ -95,8 +92,6 @@ const FixtureCard: React.FC<FixtureCardProps> = ({ fixture }) => {
               </Typography>
             )}
           </Box>
-
-          {/* Versus or Score Separator */}
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 0.5 }}>
             <Typography
               variant='body2'
@@ -106,8 +101,6 @@ const FixtureCard: React.FC<FixtureCardProps> = ({ fixture }) => {
               {fixture.goals.home !== null ? '' : 'VS'}
             </Typography>
           </Box>
-
-          {/* Away Team */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               component='img'
@@ -142,8 +135,6 @@ const FixtureCard: React.FC<FixtureCardProps> = ({ fixture }) => {
             )}
           </Box>
         </Box>
-
-        {/* Venue */}
         <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
           <Typography
             variant='caption'
