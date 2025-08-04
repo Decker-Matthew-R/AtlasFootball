@@ -30,7 +30,7 @@ export interface VenueDto {
 export interface StatusDto {
   long: string;
   short: string;
-  elapsed: number;
+  elapsed: number | null;
 }
 
 export interface LeagueDto {

@@ -168,6 +168,7 @@ export default defineConfig({
         'src/**/model/*',
         'src/ApiEndpoints/*',
         '**/types/**',
+        'src/**/__tests__/**',
       ],
       thresholds: {
         branches: 90,
