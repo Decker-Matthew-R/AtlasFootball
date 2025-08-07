@@ -6,8 +6,8 @@
         "test": "./stop-server.sh && start-server-and-test 'cd .. && SPRING_PROFILES_ACTIVE=journey ./gradlew bootRun' http-get://localhost:8080 'yarn cypress:run'"
     },
     "devDependencies": {
-        "@testing-library/cypress": "^10.0.1",
-        "cypress": "^13.7.0",
+        "@testing-library/cypress": "^10.0.3",
+        "cypress": "^14.5.3",
         "start-server-and-test": "^2.0.11",
         "typescript": "^4.9.4"
     },
