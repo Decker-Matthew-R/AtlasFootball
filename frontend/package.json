@@ -102,6 +102,7 @@
         "@babel/runtime": "^7.26.1",
         "esbuild": "^0.25.0",
         "rollup": "^4.20.0",
-        "form-data": "^4.0.4"
+        "form-data": "^4.0.4",
+        "tmp": "^0.2.4"
     }
 }
