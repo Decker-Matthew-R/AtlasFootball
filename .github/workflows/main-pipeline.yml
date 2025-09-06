@@ -1,0 +1,158 @@
+name: Main Pipeline
+
+on:
+    push:
+    pull_request:
+        branches: ["main"]
+    workflow_dispatch:
+
+jobs:
+    # Testing Jobs Matrix
+    testing:
+        name: "🧪 Testing"
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                test-type:
+                    - { name: "Backend", command: "./gradlew test jacocoTestReport jacocoTestCoverageVerification", db: "atlas_test", user: "atlas_test", port: "5433", build: true }
+                    - { name: "Frontend", command: "./gradlew testFrontend", db: "atlas_test", user: "atlas_test", port: "5433", build: false }
+                    - { name: "Journey", command: "./gradlew testJourney", db: "atlas_journey", user: "atlas_journey", port: "5434", build: false }
+        permissions:
+            contents: read
+        services:
+            postgres:
+                image: postgres:16
+                ports:
+                    - ${{ matrix.test-type.port }}:5432
+                env:
+                    POSTGRES_USER: ${{ matrix.test-type.user }}
+                    POSTGRES_PASSWORD: password
+                    POSTGRES_DB: ${{ matrix.test-type.db }}
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Java and Gradle
+              uses: ./.github/actions/set-up-java-gradle
+
+            - name: Build with Gradle Wrapper
+              if: ${{ matrix.test-type.build }}
+              run: ./gradlew build
+              env:
+                  SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:${{ matrix.test-type.port }}/${{ matrix.test-type.db }}
+                  SPRING_DATASOURCE_USERNAME: ${{ matrix.test-type.user }}
+                  SPRING_DATASOURCE_PASSWORD: password
+
+            - name: Run ${{ matrix.test-type.name }} Tests
+              run: ${{ matrix.test-type.command }}
+              env:
+                  SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:${{ matrix.test-type.port }}/${{ matrix.test-type.db }}
+                  SPRING_DATASOURCE_USERNAME: ${{ matrix.test-type.user }}
+                  SPRING_DATASOURCE_PASSWORD: password
+
+    # Security Jobs Matrix (includes all security tasks)
+    security:
+        name: "🔒 Security"
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                security-type:
+                    - { name: "Secret Scanning", type: "secrets", language: "", fetch_depth: 0 }
+                    - { name: "Dependency Scan", type: "dependencies", language: "", fetch_depth: 1 }
+                    - { name: "CodeQL Java", type: "codeql", language: "java-kotlin", fetch_depth: 1 }
+                    - { name: "CodeQL JavaScript", type: "codeql", language: "javascript-typescript", fetch_depth: 1 }
+                    - { name: "CodeQL Actions", type: "codeql", language: "actions", fetch_depth: 1 }
+        permissions:
+            contents: write        # For dependency submission (includes read)
+            actions: write         # For dependency submission
+            security-events: write # For CodeQL
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: ${{ matrix.security-type.fetch_depth }}
+
+            - name: Setup Java and Gradle
+              if: matrix.security-type.type == 'dependencies' || matrix.security-type.language == 'java-kotlin'
+              uses: ./.github/actions/set-up-java-gradle
+
+            # Secret Scanning Steps
+            - name: Run Secret Scanning
+              if: matrix.security-type.type == 'secrets'
+              uses: gitleaks/gitleaks-action@v2
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+                  GITLEAKS_CONFIG: .gitleaks.toml
+
+            # Dependency Scanning Steps
+            - name: Generate and submit dependency graph
+              if: matrix.security-type.type == 'dependencies'
+              uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582
+
+            # CodeQL Steps
+            - name: Initialize CodeQL
+              if: matrix.security-type.type == 'codeql'
+              uses: github/codeql-action/init@v3
+              with:
+                  languages: ${{ matrix.security-type.language }}
+
+            - name: Autobuild
+              if: matrix.security-type.type == 'codeql'
+              uses: github/codeql-action/autobuild@v3
+
+            - name: Perform CodeQL Analysis
+              if: matrix.security-type.type == 'codeql'
+              uses: github/codeql-action/analyze@v3
+              with:
+                  category: "/language:${{ matrix.security-type.language }}"
+
+    # Deployment Jobs (sequential, only on main branch)
+    deploy-staging:
+        name: "🚀 Deploy to Staging"
+        if: github.ref == 'refs/heads/main'
+        needs: [testing, security]
+        runs-on: ubuntu-latest
+        environment: staging
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Java and Gradle
+              uses: ./.github/actions/set-up-java-gradle
+
+            - name: Build Application
+              run: ./gradlew build
+
+            - name: Deploy to Staging
+              run: |
+                  echo "🚀 Deployed to Staging Environment"
+                  echo "Environment: staging"
+                  echo "Branch: ${{ github.ref_name }}"
+                  echo "Commit: ${{ github.sha }}"
+
+    deploy-production:
+        name: "🚀 Deploy to Production"
+        if: github.ref == 'refs/heads/main'
+        needs: [deploy-staging]
+        runs-on: ubuntu-latest
+        environment: production
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Java and Gradle
+              uses: ./.github/actions/set-up-java-gradle
+
+            - name: Build Application
+              run: ./gradlew build
+
+            - name: Deploy to Production
+              run: |
+                  echo "🚀 Deployed to Production Environment"
+                  echo "Environment: production"  
+                  echo "Branch: ${{ github.ref_name }}"
+                  echo "Commit: ${{ github.sha }}"
