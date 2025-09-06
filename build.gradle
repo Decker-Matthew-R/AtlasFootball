@@ -5,16 +5,10 @@ buildscript {
     dependencies {
         classpath "org.flywaydb:flyway-database-postgresql:11.10.5"
     }
-
-    configurations.configureEach {
-        resolutionStrategy {
-            force 'org.apache.commons:commons-compress:1.26.0'
-            force 'org.apache.commons:commons-lang3:3.18.0'
-        }
-    }
 }
+
 plugins {
-    id 'org.springframework.boot' version '4.0.0-M1'
+    id 'org.springframework.boot' version '4.0.0-M2'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
     id 'jacoco'
@@ -23,15 +17,6 @@ plugins {
     id "org.flywaydb.flyway" version "11.10.5"
     id 'com.diffplug.spotless' version '7.0.4'
     id 'org.owasp.dependencycheck' version '12.1.3'
-}
-
-
-configurations.configureEach {
-    resolutionStrategy {
-        force 'org.apache.commons:commons-compress:1.26.0'
-        force 'com.nimbusds:nimbus-jose-jwt:10.3.1'
-        force 'org.apache.commons:commons-lang3:3.18.0'
-    }
 }
 
 dependencyCheck {
@@ -93,13 +78,6 @@ jacoco {
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
-    }
-}
-
-dependencyManagement {
-    dependencies {
-        dependency 'org.apache.tomcat.embed:tomcat-embed-core:11.0.10'
-        dependency 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.10'
     }
 }
 
