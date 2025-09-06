@@ -29,6 +29,7 @@ public class UserController {
     public ResponseEntity<?> logout(HttpServletResponse response, HttpServletRequest request) {
         try {
             Cookie jwtCookie = new Cookie("jwt", null);
+
             jwtCookie.setHttpOnly(true);
             jwtCookie.setSecure(false);
             jwtCookie.setPath("/");
