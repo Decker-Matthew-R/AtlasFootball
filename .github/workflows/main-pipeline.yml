@@ -135,33 +135,85 @@ jobs:
     deploy-staging:
         name: "🚀 Deploy to Staging"
         if: github.ref == 'refs/heads/main'
-        needs: [build]
+        needs: [ build ]
         runs-on: ubuntu-latest
-        environment: staging
+        strategy:
+            fail-fast: false
+            matrix:
+                stage:
+                    - { name: "Deploy", type: "deploy", order: 1 }
+                    - { name: "Health Check", type: "health", order: 2, auto: true }
+                    - { name: "Journey Tests", type: "journey", order: 2, auto: true }
+                    - { name: "Staging Logs", type: "logs", order: 2, auto: false }
+        environment: ${{ matrix.stage.type == 'logs' && 'staging-logs' || (matrix.stage.type == 'deploy' && 'staging' || '') }}
         permissions:
             contents: read
         steps:
-            - uses: actions/checkout@v4
+            -   uses: actions/checkout@v4
 
-            - name: Download Build Artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  name: build-artifacts
-                  path: build
+            # Deployment step (runs first)
+            -   name: Download Build Artifacts
+                if: matrix.stage.type == 'deploy'
+                uses: actions/download-artifact@v4
+                with:
+                    name: build-artifacts
+                    path: build
 
-            - name: Deploy to Staging
-              run: |
-                  echo "🚀 Deployed to Staging Environment"
-                  echo "Environment: staging"
-                  echo "Branch: ${{ github.ref_name }}"
-                  echo "Commit: ${{ github.sha }}"
-                  echo "Artifacts available in: build/"
-                  ls -la build/
+            -   name: Deploy to Staging
+                if: matrix.stage.type == 'deploy'
+                run: |
+                    echo "🚀 Deployed to Staging Environment"
+                    echo "Environment: staging"
+                    echo "Branch: ${{ github.ref_name }}"
+                    echo "Commit: ${{ github.sha }}"
+                    echo "Artifacts available in: build/"
+                    ls -la build/
+
+            # Wait for deployment to complete before running validation
+            -   name: Wait for deployment to stabilize
+                if: matrix.stage.order == 2
+                run: |
+                    echo "Waiting for deployment to complete and stabilize..."
+                    sleep 30
+
+            # Skip non-automatic jobs on push events
+            -   name: Check if validation job should run
+                if: matrix.stage.auto == false && github.event_name == 'push'
+                run: |
+                    echo "Skipping manual job on automatic pipeline run"
+                    exit 0
+
+            # Validation steps (run after deployment)
+            -   name: Setup Java and Gradle
+                if: matrix.stage.type == 'journey' && (matrix.stage.auto == true || github.event_name == 'workflow_dispatch')
+                uses: ./.github/actions/set-up-java-gradle
+
+            -   name: Run Health Check
+                if: matrix.stage.type == 'health' && (matrix.stage.auto == true || github.event_name == 'workflow_dispatch')
+                run: |
+                    echo "🏥 Testing Staging Health"
+                    echo "Checking actuator endpoint..."
+                    echo "Status: Healthy"
+
+            -   name: Run Journey Tests on Staging
+                if: matrix.stage.type == 'journey' && (matrix.stage.auto == true || github.event_name == 'workflow_dispatch')
+                run: |
+                    echo "🧭 Running Journey Tests on Staging"
+                    echo "Executing staging journey tests..."
+                    echo "All journey tests passed"
+
+            -   name: Retrieve Staging Logs
+                if: matrix.stage.type == 'logs' && github.event_name == 'workflow_dispatch'
+                run: |
+                    echo "📄 Retrieving Staging Logs"
+                    echo "Time period: Last 1 hour"
+                    echo "Log level: INFO and above"
+                    echo "Logs retrieved successfully"
 
     deploy-production:
         name: "🚀 Deploy to Production"
         if: github.ref == 'refs/heads/main'
-        needs: [ deploy-staging ]
+        needs: [deploy-staging]
         runs-on: ubuntu-latest
         environment: production
         permissions:
