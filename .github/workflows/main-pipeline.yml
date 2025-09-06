@@ -7,7 +7,6 @@ on:
     workflow_dispatch:
 
 jobs:
-    # Testing Jobs Matrix
     testing:
         name: "🧪 Testing"
         runs-on: ubuntu-latest
@@ -55,7 +54,6 @@ jobs:
                   SPRING_DATASOURCE_USERNAME: ${{ matrix.test-type.user }}
                   SPRING_DATASOURCE_PASSWORD: password
 
-    # Security Jobs Matrix (includes all security tasks)
     security:
         name: "🔒 Security"
         runs-on: ubuntu-latest
@@ -69,9 +67,9 @@ jobs:
                     - { name: "CodeQL JavaScript", type: "codeql", language: "javascript-typescript", fetch_depth: 1 }
                     - { name: "CodeQL Actions", type: "codeql", language: "actions", fetch_depth: 1 }
         permissions:
-            contents: write        # For dependency submission (includes read)
-            actions: write         # For dependency submission
-            security-events: write # For CodeQL
+            contents: write
+            actions: write
+            security-events: write
         steps:
             - uses: actions/checkout@v4
               with:
@@ -81,7 +79,6 @@ jobs:
               if: matrix.security-type.type == 'dependencies' || matrix.security-type.language == 'java-kotlin'
               uses: ./.github/actions/set-up-java-gradle
 
-            # Secret Scanning Steps
             - name: Run Secret Scanning
               if: matrix.security-type.type == 'secrets'
               uses: gitleaks/gitleaks-action@v2
@@ -90,12 +87,10 @@ jobs:
                   GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
                   GITLEAKS_CONFIG: .gitleaks.toml
 
-            # Dependency Scanning Steps
             - name: Generate and submit dependency graph
               if: matrix.security-type.type == 'dependencies'
               uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582
 
-            # CodeQL Steps
             - name: Initialize CodeQL
               if: matrix.security-type.type == 'codeql'
               uses: github/codeql-action/init@v3
@@ -112,21 +107,47 @@ jobs:
               with:
                   category: "/language:${{ matrix.security-type.language }}"
 
-    # Deployment Jobs (sequential, only on main branch)
+    build:
+        name: "🔨 Build Application"
+        if: github.ref == 'refs/heads/main'
+        needs: [ testing, security ]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            -   uses: actions/checkout@v4
+
+            -   name: Setup Java and Gradle
+                uses: ./.github/actions/set-up-java-gradle
+
+            -   name: Build Application
+                run: ./gradlew build -x test -x flywayTestDbClean -x flywayTestDbMigrate
+
+            -   name: Upload Build Artifacts
+                uses: actions/upload-artifact@v4
+                with:
+                    name: build-artifacts
+                    path: |
+                        build/libs/*.jar
+                        build/distributions/*
+                    retention-days: 1
+
     deploy-staging:
         name: "🚀 Deploy to Staging"
         if: github.ref == 'refs/heads/main'
-        needs: [testing, security]
+        needs: [build]
         runs-on: ubuntu-latest
         environment: staging
+        permissions:
+            contents: read
         steps:
             - uses: actions/checkout@v4
 
-            - name: Setup Java and Gradle
-              uses: ./.github/actions/set-up-java-gradle
-
-            - name: Build Application
-              run: ./gradlew build
+            - name: Download Build Artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-artifacts
+                  path: build
 
             - name: Deploy to Staging
               run: |
@@ -134,25 +155,31 @@ jobs:
                   echo "Environment: staging"
                   echo "Branch: ${{ github.ref_name }}"
                   echo "Commit: ${{ github.sha }}"
+                  echo "Artifacts available in: build/"
+                  ls -la build/
 
     deploy-production:
         name: "🚀 Deploy to Production"
         if: github.ref == 'refs/heads/main'
-        needs: [deploy-staging]
+        needs: [ deploy-staging ]
         runs-on: ubuntu-latest
         environment: production
+        permissions:
+            contents: read
         steps:
-            - uses: actions/checkout@v4
+            -   uses: actions/checkout@v4
 
-            - name: Setup Java and Gradle
-              uses: ./.github/actions/set-up-java-gradle
+            -   name: Download Build Artifacts
+                uses: actions/download-artifact@v4
+                with:
+                    name: build-artifacts
+                    path: build
 
-            - name: Build Application
-              run: ./gradlew build
-
-            - name: Deploy to Production
-              run: |
-                  echo "🚀 Deployed to Production Environment"
-                  echo "Environment: production"  
-                  echo "Branch: ${{ github.ref_name }}"
-                  echo "Commit: ${{ github.sha }}"
+            -   name: Deploy to Production
+                run: |
+                    echo "🚀 Deployed to Production Environment"
+                    echo "Environment: production"  
+                    echo "Branch: ${{ github.ref_name }}"
+                    echo "Commit: ${{ github.sha }}"
+                    echo "Artifacts available in: build/"
+                    ls -la build/
