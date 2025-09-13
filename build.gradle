@@ -30,6 +30,13 @@ dependencyCheck {
     formats = ['HTML', 'JSON']
     outputDirectory = 'build/reports'
     nvd.apiKey = System.getenv('NVD_API_KEY')
+
+    scanSet = [
+        'frontend/package.json',
+        'frontend/yarn.lock',
+        'journey/package.json',
+        'journey/yarn.lock'
+    ]
 }
 
 dependencyLocking {
