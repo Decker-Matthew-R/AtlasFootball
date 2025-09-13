@@ -63,6 +63,7 @@ jobs:
                 security-type:
                     - { name: "Secret Scanning", type: "secrets", language: "", fetch_depth: 0 }
                     - { name: "Dependency Scan", type: "dependencies", language: "", fetch_depth: 1 }
+                    - { name: "CVE Scan", type: "cve", language: "", fetch_depth: 1 }
                     - { name: "CodeQL Java", type: "codeql", language: "java-kotlin", fetch_depth: 1 }
                     - { name: "CodeQL JavaScript", type: "codeql", language: "javascript-typescript", fetch_depth: 1 }
                     - { name: "CodeQL Actions", type: "codeql", language: "actions", fetch_depth: 1 }
@@ -76,7 +77,7 @@ jobs:
                   fetch-depth: ${{ matrix.security-type.fetch_depth }}
 
             - name: Setup Java and Gradle
-              if: matrix.security-type.type == 'dependencies' || matrix.security-type.language == 'java-kotlin'
+              if: matrix.security-type.type == 'dependencies' || matrix.security-type.type == 'cve' || matrix.security-type.language == 'java-kotlin'
               uses: ./.github/actions/set-up-java-gradle
 
             - name: Run Secret Scanning
@@ -90,6 +91,26 @@ jobs:
             - name: Generate and submit dependency graph
               if: matrix.security-type.type == 'dependencies'
               uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582
+
+            - name: Run CVE Vulnerability Scan
+              if: matrix.security-type.type == 'cve'
+              env:
+                  NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+              run: |
+                  echo "🔍 Scanning for CVEs..."
+                  ./gradlew dependencyCheckAnalyze
+                  echo "Generating detailed CVE report..."
+                  ./gradlew cveReport
+                  echo "Checking for high-severity vulnerabilities..."
+                  
+                  # Check if any high/critical vulnerabilities exist
+                  if ./gradlew dependencyCheckAnalyze | grep -q "One or more dependencies were identified with known vulnerabilities"; then
+                    echo "❌ CVE scan failed - vulnerabilities found above threshold"
+                    echo "See detailed report above for remediation steps"
+                    exit 1
+                  else
+                    echo "✅ CVE scan passed - no high-severity vulnerabilities found"
+                  fi
 
             - name: Initialize CodeQL
               if: matrix.security-type.type == 'codeql'
@@ -151,7 +172,6 @@ jobs:
         steps:
             -   uses: actions/checkout@v4
 
-            # Deployment step (runs first)
             -   name: Download Build Artifacts
                 if: matrix.stage.type == 'deploy'
                 uses: actions/download-artifact@v4
@@ -169,21 +189,18 @@ jobs:
                     echo "Artifacts available in: build/"
                     ls -la build/
 
-            # Wait for deployment to complete before running validation
             -   name: Wait for deployment to stabilize
                 if: matrix.stage.order == 2
                 run: |
                     echo "Waiting for deployment to complete and stabilize..."
                     sleep 30
 
-            # Skip non-automatic jobs on push events
             -   name: Check if validation job should run
                 if: matrix.stage.auto == false && github.event_name == 'push'
                 run: |
                     echo "Skipping manual job on automatic pipeline run"
                     exit 0
 
-            # Validation steps (run after deployment)
             -   name: Setup Java and Gradle
                 if: matrix.stage.type == 'journey' && (matrix.stage.auto == true || github.event_name == 'workflow_dispatch')
                 uses: ./.github/actions/set-up-java-gradle
