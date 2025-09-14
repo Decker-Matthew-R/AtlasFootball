@@ -5,6 +5,7 @@ import com.atlas.config.oauthHandlers.OAuth2AuthenticationFailureHandler;
 import com.atlas.config.oauthHandlers.OAuth2AuthenticationSuccessHandler;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
@@ -30,8 +32,15 @@ public class SecurityConfig {
 
     @Autowired private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Value("${ADMIN_EMAIL:admin@example.com}")
+    private String adminEmail;
+
     @Bean
     SecurityFilterChain web(HttpSecurity http) throws Exception {
+
+        String actuatorExpression =
+                String.format("isAuthenticated() and authentication.name == '%s'", adminEmail);
+
         http.cors(Customizer.withDefaults())
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -52,6 +61,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         (authorize ->
                                 authorize
+                                        .requestMatchers("/actuator/**")
+                                        .access(
+                                                new WebExpressionAuthorizationManager(
+                                                        actuatorExpression))
                                         .requestMatchers(
                                                 "/",
                                                 "/index.html",

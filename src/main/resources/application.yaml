@@ -65,6 +65,17 @@ apis:
         base-url: https://api-football-v1.p.rapidapi.com/v3
         api-key: ${RAPID_API_KEY}
         api-host: api-football-v1.p.rapidapi.com
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health
+    endpoint:
+        health:
+            show-details: when-authorized
+    health:
+        defaults:
+            enabled: true
 application:
     hostname: http://localhost:8080
     logout:
