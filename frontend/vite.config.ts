@@ -147,7 +147,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
     coverage: {
-      provider: 'v8',
+      provider: 'istanbul',
       reporter: ['text', 'json', 'html', 'lcov'],
       reportsDirectory: './coverage',
       include: ['src/**/*'],
@@ -168,7 +168,10 @@ export default defineConfig({
         'src/**/model/*',
         'src/ApiEndpoints/*',
         '**/types/**',
+        'src/**/__tests__/**',
       ],
+      skipFull: false,
+      excludeAfterRemap: true,
       thresholds: {
         branches: 90,
         functions: 90,

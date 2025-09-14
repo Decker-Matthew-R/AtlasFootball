@@ -65,7 +65,8 @@ public class SecurityConfig {
                                                 "/error",
                                                 "/oauth2/**",
                                                 "/api/public/**",
-                                                "/api/save-metric")
+                                                "/api/save-metric",
+                                                "/api/fixtures/**")
                                         .permitAll()
                                         .requestMatchers("/api/test/**")
                                         .permitAll()

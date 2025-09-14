@@ -16,8 +16,8 @@ import Typography from '@mui/material/Typography';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useUser } from '@/GlobalContext/UserContext/UserContext';
-import { useMetrics } from '@/metrics/client/MetricsClient';
-import { METRIC_EVENT_TYPE } from '@/metrics/model/METRIC_EVENT_TYPE';
+import { useMetrics } from '@/Metrics/client/MetricsClient';
+import { METRIC_EVENT_TYPE } from '@/Metrics/model/METRIC_EVENT_TYPE';
 
 interface SettingItem {
   setting: string;
