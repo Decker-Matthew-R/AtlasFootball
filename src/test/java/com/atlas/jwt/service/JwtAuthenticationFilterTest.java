@@ -261,7 +261,7 @@ class JwtAuthenticationFilterTest {
 
         boolean shouldNotFilter = jwtAuthenticationFilter.shouldNotFilter(request);
 
-        assertThat(shouldNotFilter).isTrue();
+        assertThat(shouldNotFilter).isFalse();
     }
 
     @Test
