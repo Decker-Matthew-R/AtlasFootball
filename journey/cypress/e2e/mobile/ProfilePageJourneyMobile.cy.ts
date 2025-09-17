@@ -1,3 +1,5 @@
+import {mockFixturesResponse} from '../../support/mockData/fixturesData';
+
 export {}
 
 describe("As a mobile user on the profile page", () => {
@@ -8,7 +10,16 @@ describe("As a mobile user on the profile page", () => {
       name: 'Authenticated User'
     });
 
+    cy.intercept('GET', '/api/fixtures/upcoming', {
+      statusCode: 200,
+      body: mockFixturesResponse
+    }).as('getFixtures');
+
     cy.visit('/');
+    cy.wait('@getFixtures');
+    cy.wait(2000);
+
+
   })
   afterEach(() => {
     Cypress.session.clearAllSavedSessions();

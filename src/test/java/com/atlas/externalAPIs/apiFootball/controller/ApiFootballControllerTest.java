@@ -12,7 +12,6 @@ import com.atlas.externalAPIs.apiFootball.service.FixtureMapperService;
 import com.atlas.externalAPIs.apiFootball.service.model.ExceptionTypes.ApiFootballException;
 import com.atlas.externalAPIs.apiFootball.service.model.response.FixtureResponse;
 import com.atlas.user.service.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -28,16 +27,10 @@ import org.springframework.test.web.servlet.MockMvc;
 class ApiFootballControllerTest {
 
     @Autowired private MockMvc mockMvc;
-
     @MockitoBean private ApiFootballService apiFootballService;
-
     @MockitoBean private FixtureMapperService fixtureMapperService;
-
     @MockitoBean private JwtTokenProvider jwtTokenProvider;
-
     @MockitoBean private UserService userService;
-
-    @Autowired private ObjectMapper objectMapper;
 
     @Test
     void getUpcomingFixtures_ShouldReturnSuccessResponse_WhenServiceReturnsData() throws Exception {

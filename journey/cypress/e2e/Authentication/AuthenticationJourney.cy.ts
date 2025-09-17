@@ -1,3 +1,4 @@
+import {mockFixturesResponse} from '../../support/mockData/fixturesData';
 export {}
 
 describe('Minimal Backend Auth Test', () => {
@@ -13,7 +14,14 @@ describe('Minimal Backend Auth Test', () => {
     cy.getCookie('jwt').should('exist')
     cy.getCookie('user_info').should('exist')
 
-    cy.visit('/')
+    cy.intercept('GET', '/api/fixtures/upcoming', {
+      statusCode: 200,
+      body: mockFixturesResponse
+    }).as('getFixtures');
+
+    cy.visit('/');
+    cy.wait('@getFixtures');
+    cy.wait(2000);
 
     cy.getCookie('jwt').should('exist')
     cy.getCookie('user_info').should('exist')
