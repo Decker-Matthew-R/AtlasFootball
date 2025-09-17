@@ -11,7 +11,16 @@ server:
             ## Default, by required by APSC-DV-002270
             tracking-modes: COOKIE
     shutdown: graceful
+apis:
+    football:
+        baseUrl: https://api-football-v1.p.rapidapi.com/v3
+        apiKey: test-key
+        apiHost: api-football-v1.p.rapidapi.com
+        timeoutSeconds: 30
+
 spring:
+    cache:
+        type: simple
     application:
         name: atlasc
     output:
