@@ -5,6 +5,14 @@ export {}
 describe("As a mobile user on the landing page", () => {
   beforeEach(() => {
     cy.viewport(375, 667);
+    cy.intercept('GET', '/api/fixtures/upcoming', {
+      statusCode: 200,
+      body: mockFixturesResponse
+    }).as('getFixtures');
+
+    cy.visit('/');
+    cy.wait('@getFixtures');
+    cy.wait(2000);
   })
 
   afterEach(() => {
@@ -36,7 +44,6 @@ describe("As a mobile user on the landing page", () => {
   });
 
   it('I should see a hamburger menu with navigation options', () => {
-    cy.visit('/');
 
     cy.get('[aria-label="navigation-links"]').as('hamburgerMenu');
     cy.get('@hamburgerMenu').should('be.visible');
@@ -55,7 +62,6 @@ describe("As a mobile user on the landing page", () => {
   });
 
   it('I should be able to click the profile icon and see login button when unauthenticated', () => {
-    cy.visit('/');
 
     const profileButton = cy.findByRole('button', { name: 'Open Profile Settings' });
 
@@ -93,14 +99,6 @@ describe("As a mobile user on the landing page", () => {
   });
 
   it('should load and display fixtures from different leagues', () => {
-    cy.intercept('GET', '/api/fixtures/upcoming', {
-      statusCode: 200,
-      body: mockFixturesResponse
-    }).as('getFixtures');
-
-    cy.visit('/');
-    cy.wait('@getFixtures');
-    cy.wait(2000);
 
     cy.get('[data-testid="landing-page-container"]').should('be.visible');
     cy.contains('Premier League').should('be.visible');

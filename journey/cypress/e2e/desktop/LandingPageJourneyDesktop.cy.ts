@@ -19,9 +19,7 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
     }).as('getFixtures');
 
     cy.visit('/');
-
     cy.wait('@getFixtures');
-
     cy.wait(2000);
 
     cy.window().then((win) => {
@@ -43,7 +41,8 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
     }).as('getFixtures');
 
     cy.visit('/');
-
+    cy.wait('@getFixtures');
+    cy.wait(2000);
 
     const siteNameOnNavBar = cy.get('[aria-label="atlas-site-name"]');
     siteNameOnNavBar.should('be.visible').and('contain.text', 'ATLAS');
@@ -58,7 +57,7 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
     const matchesButton = cy.findByRole('button', {name: 'Matches'});
     matchesButton.should('be.visible');
 
-    const profileButton = cy.findByRole('button', { name: 'Open Profile Settings' });
+    const profileButton = cy.findByRole('button', {name: 'Open Profile Settings'});
     profileButton.should('be.visible');
   });
 
@@ -69,9 +68,9 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
       body: mockFixturesResponse
     }).as('getFixtures');
 
-    cy.visit('/');
-    
-    const profileButton = cy.findByRole('button', { name: 'Open Profile Settings' });
+    cy.visit("/")
+
+    const profileButton = cy.findByRole('button', {name: 'Open Profile Settings'});
 
     profileButton.click();
 
@@ -86,22 +85,21 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
   });
 
   it('I should be able to click the profile icon and see profile settings when authenticated', () => {
+    cy.loginViaBackend({
+      email: 'authenticated-test@example.com',
+      name: 'Authenticated User'
+    });
+
     cy.intercept('GET', '/api/fixtures/upcoming', {
       statusCode: 200,
       body: mockFixturesResponse
     }).as('getFixtures');
 
     cy.visit('/');
+    cy.wait('@getFixtures');
+    cy.wait(2000);
 
-
-    cy.loginViaBackend({
-      email: 'authenticated-test@example.com',
-      name: 'Authenticated User'
-    });
-
-    cy.visit('/');
-
-    const profileButton = cy.findByRole('button', { name: 'Open Profile Settings' });
+    const profileButton = cy.findByRole('button', {name: 'Open Profile Settings'});
 
     profileButton.click();
 
@@ -122,9 +120,7 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
     }).as('getFixtures');
 
     cy.visit('/');
-
     cy.wait('@getFixtures');
-
     cy.wait(2000);
 
     cy.get('[data-testid="landing-page-container"]').should('be.visible');
@@ -142,9 +138,16 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
   });
 
   it('I should be able to see a login button', () => {
-    cy.visit('/');
+    cy.intercept('GET', '/api/fixtures/upcoming', {
+      statusCode: 200,
+      body: mockFixturesResponse
+    }).as('getFixtures');
 
-    cy.findByRole('button', { name: 'Open Profile Settings' }).click();
+    cy.visit('/');
+    cy.wait('@getFixtures');
+    cy.wait(2000);
+
+    cy.findByRole('button', {name: 'Open Profile Settings'}).click();
 
     cy.findByRole('button', {name: 'Login'}).as('loginButton')
     cy.get('@loginButton').should('be.visible');
@@ -156,7 +159,7 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
       body: {error: 'Internal server error'}
     }).as('getFixturesError');
 
-    cy.visit('/');
+    cy.visit("/")
     cy.wait('@getFixturesError');
 
     cy.contains('No fixtures available at the moment.').should('be.visible');
@@ -173,13 +176,14 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
       }
     }).as('getEmptyFixtures');
 
-    cy.visit('/');
+    cy.visit("/")
     cy.wait('@getEmptyFixtures');
 
     cy.contains('No fixtures available at the moment.').should('be.visible');
   });
 
   it('should display league carousels with scroll functionality', () => {
+
     cy.intercept('GET', '/api/fixtures/upcoming', {
       statusCode: 200,
       body: mockFixturesResponse
@@ -187,7 +191,6 @@ describe("As a desktop user, I should see fixtures on the landing page", () => {
 
     cy.visit('/');
     cy.wait('@getFixtures');
-
     cy.wait(2000);
 
     cy.contains('Premier League').should('be.visible');
